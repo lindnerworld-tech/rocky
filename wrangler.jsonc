@@ -3,6 +3,7 @@
   "name": "rocky-github-preview",
   "main": "./worker.mjs",
   "compatibility_date": "2026-07-15",
+  "keep_vars": true,
   "observability": {
     "enabled": true
   },
