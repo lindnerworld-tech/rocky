@@ -7,6 +7,20 @@
   "observability": {
     "enabled": true
   },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "USAGE_LIMITER",
+        "class_name": "RockyUsageLimiter"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["RockyUsageLimiter"]
+    }
+  ],
   "assets": {
     "directory": "./WEBSITE",
     "binding": "ASSETS",
