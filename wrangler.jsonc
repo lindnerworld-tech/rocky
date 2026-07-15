@@ -48,5 +48,52 @@
     "directory": "./WEBSITE",
     "binding": "ASSETS",
     "run_worker_first": ["/ask-rocky", "/rocky-config"]
+  },
+  "env": {
+    "staging": {
+      "name": "rocky-github-preview-staging",
+      "vars": {
+        "ROCKY_AI_ENABLED": "true",
+        "ROCKY_DAILY_IP_LIMIT": "3",
+        "ROCKY_GLOBAL_DAILY_LIMIT": "25"
+      },
+      "ratelimits": [
+        {
+          "name": "IP_RATE_LIMITER",
+          "namespace_id": "42511",
+          "simple": {
+            "limit": 5,
+            "period": 60
+          }
+        },
+        {
+          "name": "GLOBAL_RATE_LIMITER",
+          "namespace_id": "42512",
+          "simple": {
+            "limit": 20,
+            "period": 60
+          }
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "USAGE_LIMITER",
+            "class_name": "RockyUsageLimiter"
+          }
+        ]
+      },
+      "migrations": [
+        {
+          "tag": "v1",
+          "new_sqlite_classes": ["RockyUsageLimiter"]
+        }
+      ],
+      "assets": {
+        "directory": "./WEBSITE",
+        "binding": "ASSETS",
+        "run_worker_first": ["/ask-rocky", "/rocky-config"]
+      }
+    }
   }
 }
