@@ -634,11 +634,13 @@
             button.disabled = true;
             button.textContent = "Refreshing protection...";
           },
-          "error-callback"() {
+          "error-callback"(errorCode) {
             turnstileToken = "";
             button.disabled = true;
             button.textContent = "Protection unavailable";
-            answerField.textContent = "Rocky's safety check needs a moment. Refresh the page and try again.";
+            const safeErrorCode = String(errorCode || "unknown").replace(/[^0-9A-Za-z_-]/g, "");
+            answerField.textContent = `Rocky's safety check needs a moment. Refresh the page and try again. (Turnstile error: ${safeErrorCode})`;
+            return true;
           }
         });
       } catch (error) {
