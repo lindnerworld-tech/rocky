@@ -1,12 +1,27 @@
-export async function onRequestPost(context) {
+﻿export async function onRequestPost(context) {
   try {
     const { request, env } = context;
 
-    const body = await request.json();
-    const question = body.question || "";
-    const category = body.category || "life";
+    if (!env.OPENAI_API_KEY) {
+      throw new Error("OPENAI_API_KEY is not configured");
+    }
 
-    if (!question.trim()) {
+    const body = await request.json();
+    const question = String(body.question || "").trim().slice(0, 1000);
+
+    const allowedCategories = new Set([
+      "life",
+      "money",
+      "business",
+      "relationships",
+      "courage"
+    ]);
+
+    const category = allowedCategories.has(body.category)
+      ? body.category
+      : "life";
+
+    if (!question) {
       return Response.json({
         answer: "Ask me something, friend. Even rocks listen better with a question."
       });
@@ -74,30 +89,38 @@ Question:
 ${question}
 `;
 
-    const response = await fetch(
-      "https://api.openai.com/v1/responses",
-      {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${env.OPENAI_API_KEY}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          model: "gpt-4.1-mini",
-          input: rockyPrompt
-        })
-      }
-    );
+    const response = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${env.OPENAI_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "gpt-4.1-mini",
+        input: rockyPrompt,
+        max_output_tokens: 160,
+        store: false
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API returned ${response.status}`);
+    }
 
     const data = await response.json();
 
-    const answer =
-      data.output_text ||
-      "The tide is quiet right now. Ask me again in a moment.";
+    const answer = (data.output || [])
+      .flatMap(item => item.content || [])
+      .find(content => content.type === "output_text")
+      ?.text;
 
-    return Response.json({ answer });
+    return Response.json({
+      answer: answer || "The tide is quiet right now. Ask me again in a moment."
+    });
 
   } catch (error) {
+    console.error("Ask Rocky error:", error);
+
     return Response.json({
       answer: "Even rocks hit rough ground sometimes. Try again in a moment."
     });
