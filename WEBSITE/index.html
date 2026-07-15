@@ -1,161 +1,630 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-<title>ROCKY | AI Pet Rock Companion</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-body{margin:0;font-family:Arial,sans-serif;background:#f5f0e6;color:#222;line-height:1.6}
-.hero{background:#1f4f73;color:white;text-align:center;padding:90px 20px}
-.hero h1{font-size:72px;margin:0}
-.hero p{font-size:24px}
-.section{max-width:900px;margin:auto;padding:50px 20px}
-.card{background:white;padding:25px;margin:20px 0;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.12)}
-.ask-section{padding:40px;text-align:center;background:#f4efe7}
-input,select{padding:12px;width:80%;max-width:500px;border-radius:8px;border:1px solid #999;margin-top:10px}
-button{padding:12px 25px;border:none;border-radius:8px;background:#5b3a29;color:white;cursor:pointer;margin-top:15px}
-.footer{background:#222;color:white;text-align:center;padding:40px}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Rocky is a 4-billion-year-old AI pet rock companion delivering calm perspective, island humor, and daily wisdom.">
+  <meta name="theme-color" content="#102b39">
+  <title>ROCKY | Ancient Wisdom. Island Humor.</title>
+  <link rel="preload" href="rocky-hero.png" as="image">
+  <style>
+    :root {
+      --ink: #142129;
+      --deep-ocean: #102b39;
+      --ocean: #166979;
+      --turquoise: #59c4c4;
+      --sunrise: #f2a65a;
+      --coral: #dd744c;
+      --sand: #f5efe4;
+      --cream: #fffaf1;
+      --white: #ffffff;
+      --muted: #5d6a70;
+      --shadow: 0 24px 70px rgba(16, 43, 57, 0.14);
+      --radius: 24px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--sand);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: inherit; }
+
+    button, input, select, textarea { font: inherit; }
+
+    .site-nav {
+      position: absolute;
+      inset: 0 0 auto;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 24px 0;
+      color: var(--white);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      font-size: 1.08rem;
+      font-weight: 900;
+      letter-spacing: 0.18em;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 28px;
+      border: 2px solid rgba(255,255,255,.88);
+      border-radius: 48% 52% 44% 56%;
+      background: rgba(255,255,255,.12);
+      box-shadow: inset 0 -8px 14px rgba(0,0,0,.18);
+      transform: rotate(-4deg);
+    }
+
+    .nav-link {
+      padding: 9px 16px;
+      border: 1px solid rgba(255,255,255,.4);
+      border-radius: 999px;
+      background: rgba(8, 27, 36, .22);
+      backdrop-filter: blur(12px);
+      color: var(--white);
+      text-decoration: none;
+      font-weight: 750;
+    }
+
+    .hero {
+      position: relative;
+      isolation: isolate;
+      min-height: 820px;
+      min-height: 88svh;
+      display: grid;
+      align-items: center;
+      overflow: hidden;
+      color: var(--white);
+      background: #162d38 url("rocky-hero.png") 64% center / cover no-repeat;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background:
+        linear-gradient(90deg, rgba(6,25,34,.93) 0%, rgba(8,28,38,.76) 36%, rgba(8,28,38,.18) 62%, rgba(8,28,38,.08) 100%),
+        linear-gradient(0deg, rgba(8,25,33,.5) 0%, transparent 30%);
+    }
+
+    .hero-inner {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 150px 0 100px;
+    }
+
+    .hero-copy { max-width: 640px; }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 22px;
+      padding: 8px 14px;
+      border: 1px solid rgba(255,255,255,.28);
+      border-radius: 999px;
+      background: rgba(8,28,38,.28);
+      backdrop-filter: blur(10px);
+      color: #fff3df;
+      font-size: .79rem;
+      font-weight: 850;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--sunrise);
+      box-shadow: 0 0 0 5px rgba(242,166,90,.16);
+    }
+
+    h1, h2, h3 { line-height: 1.08; }
+
+    h1 {
+      max-width: 720px;
+      margin: 0;
+      font-size: clamp(3.7rem, 8vw, 7rem);
+      letter-spacing: -.065em;
+    }
+
+    .hero-tagline {
+      margin: 22px 0 0;
+      color: #ffe9ca;
+      font-size: clamp(1.2rem, 2.2vw, 1.65rem);
+      font-weight: 800;
+    }
+
+    .hero-text {
+      max-width: 570px;
+      margin: 18px 0 0;
+      color: rgba(255,255,255,.88);
+      font-size: 1.08rem;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 13px;
+      margin-top: 32px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 52px;
+      padding: 0 23px;
+      border: 0;
+      border-radius: 999px;
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 850;
+      transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease;
+    }
+
+    .button:hover { transform: translateY(-2px); }
+
+    .button-primary {
+      color: #1d2020;
+      background: linear-gradient(135deg, #ffd08b, var(--sunrise));
+      box-shadow: 0 14px 34px rgba(242,166,90,.3);
+    }
+
+    .button-secondary {
+      border: 1px solid rgba(255,255,255,.32);
+      color: var(--white);
+      background: rgba(255,255,255,.09);
+      backdrop-filter: blur(10px);
+    }
+
+    .wisdom-strip {
+      position: relative;
+      z-index: 2;
+      width: min(1040px, calc(100% - 40px));
+      margin: -48px auto 0;
+      padding: 27px 32px;
+      border: 1px solid rgba(255,255,255,.7);
+      border-radius: var(--radius);
+      background: rgba(255,250,241,.94);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      text-align: center;
+    }
+
+    .wisdom-label {
+      margin: 0 0 6px;
+      color: var(--coral);
+      font-size: .76rem;
+      font-weight: 900;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .wisdom-quote {
+      margin: 0;
+      color: var(--deep-ocean);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(1.25rem, 2.8vw, 1.8rem);
+      font-style: italic;
+    }
+
+    .section {
+      width: min(1120px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 104px 0;
+    }
+
+    .section-kicker {
+      margin: 0 0 10px;
+      color: var(--ocean);
+      font-size: .8rem;
+      font-weight: 900;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .section-title {
+      max-width: 760px;
+      margin: 0;
+      color: var(--deep-ocean);
+      font-size: clamp(2.25rem, 5vw, 4.25rem);
+      letter-spacing: -.045em;
+    }
+
+    .section-lead {
+      max-width: 690px;
+      margin: 20px 0 0;
+      color: var(--muted);
+      font-size: 1.1rem;
+    }
+
+    .principles {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-top: 44px;
+    }
+
+    .principle {
+      min-height: 230px;
+      padding: 28px;
+      border: 1px solid rgba(16,43,57,.08);
+      border-radius: 22px;
+      background: var(--cream);
+      box-shadow: 0 16px 46px rgba(16,43,57,.07);
+    }
+
+    .principle-number {
+      display: grid;
+      place-items: center;
+      width: 43px;
+      height: 43px;
+      border-radius: 50%;
+      color: var(--white);
+      background: var(--ocean);
+      font-weight: 900;
+    }
+
+    .principle h3 {
+      margin: 23px 0 10px;
+      color: var(--deep-ocean);
+      font-size: 1.35rem;
+    }
+
+    .principle p { margin: 0; color: var(--muted); }
+
+    .ask-shell {
+      padding: 104px 20px;
+      color: var(--white);
+      background:
+        radial-gradient(circle at 15% 20%, rgba(89,196,196,.16), transparent 32%),
+        radial-gradient(circle at 85% 80%, rgba(242,166,90,.17), transparent 28%),
+        var(--deep-ocean);
+    }
+
+    .ask-grid {
+      display: grid;
+      grid-template-columns: .78fr 1.22fr;
+      gap: 56px;
+      align-items: center;
+      width: min(1120px, 100%);
+      margin: 0 auto;
+    }
+
+    .ask-copy h2 {
+      margin: 0;
+      font-size: clamp(2.6rem, 5.5vw, 4.7rem);
+      letter-spacing: -.05em;
+    }
+
+    .ask-copy p {
+      max-width: 450px;
+      margin: 20px 0 0;
+      color: rgba(255,255,255,.76);
+    }
+
+    .counter {
+      display: inline-flex;
+      gap: 7px;
+      margin-top: 28px;
+      padding: 8px 13px;
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 999px;
+      color: #ffe7c4;
+      font-size: .86rem;
+      font-weight: 800;
+    }
+
+    .ask-card {
+      padding: clamp(24px, 4vw, 40px);
+      border: 1px solid rgba(255,255,255,.13);
+      border-radius: 28px;
+      background: rgba(255,255,255,.08);
+      box-shadow: 0 30px 80px rgba(0,0,0,.22);
+      backdrop-filter: blur(14px);
+    }
+
+    .field { margin-bottom: 17px; }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      color: rgba(255,255,255,.82);
+      font-size: .82rem;
+      font-weight: 850;
+      letter-spacing: .05em;
+    }
+
+    select, textarea {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 14px;
+      outline: none;
+      color: var(--white);
+      background: rgba(5,20,27,.42);
+    }
+
+    select { min-height: 50px; padding: 0 14px; }
+
+    select option { color: var(--ink); background: var(--white); }
+
+    textarea {
+      min-height: 118px;
+      padding: 14px;
+      resize: vertical;
+    }
+
+    select:focus, textarea:focus {
+      border-color: var(--turquoise);
+      box-shadow: 0 0 0 4px rgba(89,196,196,.15);
+    }
+
+    .ask-button {
+      width: 100%;
+      margin-top: 3px;
+      color: #192126;
+      background: linear-gradient(135deg, #ffcf88, var(--sunrise));
+    }
+
+    .ask-button:disabled { cursor: wait; opacity: .7; }
+
+    .answer {
+      min-height: 104px;
+      margin-top: 22px;
+      padding: 20px;
+      border-left: 4px solid var(--turquoise);
+      border-radius: 4px 15px 15px 4px;
+      background: rgba(255,255,255,.09);
+    }
+
+    .answer-label {
+      margin: 0 0 7px;
+      color: var(--turquoise);
+      font-size: .72rem;
+      font-weight: 900;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .answer-text {
+      margin: 0;
+      color: var(--white);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.16rem;
+      font-style: italic;
+    }
+
+    .footer {
+      padding: 42px 20px;
+      color: rgba(255,255,255,.65);
+      background: #091b24;
+      text-align: center;
+    }
+
+    .footer strong {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--white);
+      letter-spacing: .18em;
+    }
+
+    @media (max-width: 860px) {
+      .hero {
+        min-height: 760px;
+        align-items: end;
+        background-position: 66% center;
+      }
+
+      .hero::before {
+        background:
+          linear-gradient(0deg, rgba(6,25,34,.97) 0%, rgba(6,25,34,.82) 45%, rgba(6,25,34,.15) 78%),
+          linear-gradient(90deg, rgba(6,25,34,.48), transparent);
+      }
+
+      .hero-inner { padding: 160px 0 86px; }
+      .hero-copy { max-width: 680px; }
+      .principles { grid-template-columns: 1fr; }
+      .principle { min-height: auto; }
+      .ask-grid { grid-template-columns: 1fr; gap: 34px; }
+    }
+
+    @media (max-width: 560px) {
+      .site-nav { width: min(100% - 28px, 1180px); padding-top: 18px; }
+      .nav-link { padding: 7px 12px; font-size: .83rem; }
+      .hero { min-height: 720px; background-position: 71% center; }
+      .hero-inner, .section { width: min(100% - 28px, 1180px); }
+      h1 { font-size: clamp(3.4rem, 18vw, 5.2rem); }
+      .hero-tagline { font-size: 1.12rem; }
+      .wisdom-strip { width: calc(100% - 28px); padding: 23px 19px; }
+      .section { padding: 82px 0; }
+      .ask-shell { padding: 82px 14px; }
+      .hero-actions .button { width: 100%; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition: none !important; }
+    }
+  </style>
 </head>
-
 <body>
+  <nav class="site-nav" aria-label="Primary navigation">
+    <a class="brand" href="#top" aria-label="Rocky home">
+      <span class="brand-mark" aria-hidden="true"></span>
+      ROCKY
+    </a>
+    <a class="nav-link" href="#ask-rocky">Ask Rocky</a>
+  </nav>
 
-<div class="hero">
-<h1>ROCKY</h1>
-<p>Ancient Wisdom. Island Humor. Daily Perspective.</p>
-<p>The World's First AI Pet Rock Companion</p>
-</div>
+  <header class="hero" id="top">
+    <div class="hero-inner">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="eyebrow-dot"></span> Four billion years of perspective</p>
+        <h1>When life gets noisy, ask a rock.</h1>
+        <p class="hero-tagline">Ancient wisdom. Island humor. Daily perspective.</p>
+        <p class="hero-text">Rocky is an AI pet rock companion born from lava, patience, and aloha—here to help you slow down, laugh a little, and remember what matters.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#ask-rocky">Ask Rocky</a>
+          <a class="button button-secondary" href="#meet-rocky">Meet the oldest new voice on Earth</a>
+        </div>
+      </div>
+    </div>
+  </header>
 
-<div class="section">
+  <aside class="wisdom-strip" aria-live="polite">
+    <p class="wisdom-label">Today's Rocky wisdom</p>
+    <p class="wisdom-quote" id="dailyRockyWisdom">Loading today's perspective...</p>
+  </aside>
 
-<div class="card">
-<h2>Meet Rocky</h2>
-<p>Rocky is a 4-billion-year-old AI pet rock companion inspired by Hawaii, geology, patience, humor, and aloha.</p>
-<p>Rocky helps people slow down, laugh more, stress less, and remember what matters.</p>
-</div>
+  <main>
+    <section class="section" id="meet-rocky">
+      <p class="section-kicker">Meet Rocky</p>
+      <h2 class="section-title">Calm enough to outwait a volcano.</h2>
+      <p class="section-lead">Rocky is not a coach, guru, celebrity, or motivational speaker. Rocky offers short, memorable perspective shaped by oceans, mountains, trade winds, and time.</p>
 
-<div class="card">
-<h2>The Rocky Voice</h2>
-<p>Rocky is not a coach, guru, celebrity, or motivational speaker.</p>
-<p>Rocky is wisdom earned through time.</p>
-<p>Rocky speaks calmly, never panics, never argues, and says what needs to be said and nothing more.</p>
-</div>
+      <div class="principles">
+        <article class="principle">
+          <span class="principle-number">1</span>
+          <h3>Time reveals</h3>
+          <p>Not every answer arrives on your schedule. The tide still knows when to return.</p>
+        </article>
+        <article class="principle">
+          <span class="principle-number">2</span>
+          <h3>Nature teaches</h3>
+          <p>Lava builds slowly. Waves keep showing up. Small steps still shape islands.</p>
+        </article>
+        <article class="principle">
+          <span class="principle-number">3</span>
+          <h3>One step is enough</h3>
+          <p>NT2: build it once, build it right, and move forward without carrying yesterday twice.</p>
+        </article>
+      </div>
+    </section>
 
-<div class="card">
-<h2>NT2 — Never Touch Twice</h2>
-<p>Build it once.<br>Build it right.<br>Move forward.</p>
-<p>One improvement. One commit. One step forward.</p>
-</div>
+    <section class="ask-shell" id="ask-rocky">
+      <div class="ask-grid">
+        <div class="ask-copy">
+          <p class="section-kicker" style="color:#73d4d1">A quieter answer</p>
+          <h2>Ask Rocky.</h2>
+          <p>Bring the question that has been rattling around in your head. Rocky will answer briefly—because four billion years teaches you not to ramble.</p>
+          <div class="counter">Questions asked on this device: <span id="rockyCounter">0</span></div>
+        </div>
 
-<div class="card">
-<h2>Coming Soon</h2>
-<p>📱 iPhone & Android apps</p>
-<p>🤖 AI Rocky personality</p>
-<p>🌋 Weather-aware Rocky wisdom</p>
-<p>🏄 Surf and island conditions</p>
-<p>🪨 Rock collections</p>
-<p>🌎 Global travel passport</p>
-</div>
+        <div class="ask-card">
+          <div class="field">
+            <label for="rockyCategory">Choose a category</label>
+            <select id="rockyCategory">
+              <option value="life">Life</option>
+              <option value="money">Money</option>
+              <option value="business">Business</option>
+              <option value="relationships">Relationships</option>
+              <option value="courage">Courage</option>
+            </select>
+          </div>
 
-<div class="card">
-<h2>Mission</h2>
-<p>To become the world’s most loved daily source of perspective, positivity, humor, and island wisdom.</p>
-</div>
+          <div class="field">
+            <label for="rockyQuestion">Your question</label>
+            <textarea id="rockyQuestion" maxlength="1000" placeholder="What should I remember when life feels too fast?"></textarea>
+          </div>
 
-</div>
+          <button class="button ask-button" id="askButton" type="button">Ask Rocky</button>
 
-<section class="ask-section">
-<h2>Ask Rocky</h2>
+          <div class="answer" id="answerBox" aria-live="polite">
+            <p class="answer-label">Rocky says</p>
+            <p class="answer-text" id="rockyAnswer">The rock is listening.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
 
-<div class="card" style="max-width:600px;margin:25px auto;">
-<h3>🌞 Daily Rocky Wisdom</h3>
-<p id="dailyRockyWisdom" style="font-size:20px;font-style:italic;">Loading today's wisdom...</p>
-</div>
+  <footer class="footer">
+    <strong>PROJECT ROCKY</strong>
+    NT2 Forever · Built with perspective and aloha
+  </footer>
 
-<p><strong>Choose a Rocky category:</strong></p>
+  <script>
+    const wisdom = [
+      "The ocean does not hurry the tide. Neither should you.",
+      "Small steps still move mountains.",
+      "You are not stuck. You are forming.",
+      "Even lava cools into something strong.",
+      "Today is one stone in the path. Keep walking.",
+      "A rough edge is often proof that you kept moving.",
+      "Some days you ride the wave. Some days you learn its name."
+    ];
 
-<select id="rockyCategory">
-<option value="life">🌊 Life</option>
-<option value="money">💰 Money</option>
-<option value="business">🚀 Business</option>
-<option value="relationships">❤️ Relationships</option>
-<option value="courage">🌋 Courage</option>
-</select>
+    const quoteIndex = Math.floor(Date.now() / 86400000) % wisdom.length;
+    document.getElementById("dailyRockyWisdom").textContent = wisdom[quoteIndex];
 
-<br><br>
+    const savedCounter = Number(localStorage.getItem("rockyCounter") || 0);
+    document.getElementById("rockyCounter").textContent = savedCounter;
 
-<input id="rockyQuestion" type="text" placeholder="What do you want to ask Rocky?">
+    async function askRocky() {
+      const questionField = document.getElementById("rockyQuestion");
+      const answerField = document.getElementById("rockyAnswer");
+      const button = document.getElementById("askButton");
+      const question = questionField.value.trim();
+      const category = document.getElementById("rockyCategory").value;
 
-<br><br>
+      if (!question) {
+        answerField.textContent = "Ask me something, friend. Even rocks listen better with a question.";
+        questionField.focus();
+        return;
+      }
 
-<button onclick="askRocky()">Ask Rocky</button>
+      button.disabled = true;
+      button.textContent = "Rocky is thinking...";
+      answerField.textContent = "The tide is turning. Give Rocky a moment.";
 
-<h3 style="margin-top:30px;">Rocky Says:</h3>
-<p id="rockyAnswer" style="font-size:20px;font-style:italic;">...</p>
+      try {
+        const response = await fetch("/ask-rocky", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question, category })
+        });
 
-<p style="margin-top:20px;font-weight:bold;">
-Questions Asked to Rocky: <span id="rockyCounter">0</span>
-</p>
-</section>
+        if (!response.ok) throw new Error(`Request failed: ${response.status}`);
 
-<div class="footer">
-<h2>PROJECT ROCKY</h2>
-<p>NT2 Forever</p>
-</div>
+        const data = await response.json();
+        answerField.textContent = data.answer || "The tide is quiet right now. Ask again in a moment.";
 
-<script>
-async function askRocky() {
-  const question = document.getElementById("rockyQuestion").value;
-  const category = document.getElementById("rockyCategory").value;
+        const nextCounter = Number(localStorage.getItem("rockyCounter") || 0) + 1;
+        localStorage.setItem("rockyCounter", String(nextCounter));
+        document.getElementById("rockyCounter").textContent = nextCounter;
+      } catch (error) {
+        answerField.textContent = "Rocky is quiet right now. Even rocks need a moment.";
+      } finally {
+        button.disabled = false;
+        button.textContent = "Ask Rocky";
+      }
+    }
 
-  document.getElementById("rockyAnswer").innerText = "Rocky is thinking...";
-
-  try {
-    const response = await fetch("/ask-rocky", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        question,
-        category
-      })
+    document.getElementById("askButton").addEventListener("click", askRocky);
+    document.getElementById("rockyQuestion").addEventListener("keydown", event => {
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") askRocky();
     });
-
-    const data = await response.json();
-    document.getElementById("rockyAnswer").innerText = data.answer;
-
-  } catch (error) {
-    document.getElementById("rockyAnswer").innerText =
-      "Rocky is quiet right now. Even rocks need a moment.";
-  }
-
-  let counter = localStorage.getItem("rockyCounter") || 0;
-  counter++;
-  localStorage.setItem("rockyCounter", counter);
-  document.getElementById("rockyCounter").innerText = counter;
-}
-
-function showDailyRockyWisdom() {
-  const dailyQuotes = [
-    "The ocean does not hurry the tide. Neither should you.",
-    "Small steps still move mountains.",
-    "You are not stuck. You are forming.",
-    "Even lava cools into something strong.",
-    "Today is one stone in the path. Keep walking."
-  ];
-
-  const today = new Date();
-  const quoteIndex = today.getDate() % dailyQuotes.length;
-
-  document.getElementById("dailyRockyWisdom").innerText = dailyQuotes[quoteIndex];
-}
-
-window.onload = function() {
-  const savedCounter = localStorage.getItem("rockyCounter") || 0;
-  document.getElementById("rockyCounter").innerText = savedCounter;
-  showDailyRockyWisdom();
-};
-</script>
-
+  </script>
 </body>
 </html>
