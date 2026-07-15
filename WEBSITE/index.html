@@ -7,6 +7,7 @@
   <meta name="theme-color" content="#102b39">
   <title>ROCKY | Ancient Wisdom. Island Humor.</title>
   <link rel="preload" href="rocky-hero.png" as="image">
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" defer></script>
   <style>
     :root {
       --ink: #142129;
@@ -389,6 +390,17 @@
 
     .ask-button:disabled { cursor: wait; opacity: .7; }
 
+    .turnstile-wrap {
+      min-height: 65px;
+      margin: 4px 0 14px;
+    }
+
+    .safety-note {
+      margin: 0 0 16px;
+      color: rgba(255,255,255,.62);
+      font-size: .78rem;
+    }
+
     .answer {
       min-height: 104px;
       margin-top: 22px;
@@ -548,7 +560,10 @@
             <textarea id="rockyQuestion" maxlength="1000" placeholder="What should I remember when life feels too fast?"></textarea>
           </div>
 
-          <button class="button ask-button" id="askButton" type="button">Ask Rocky</button>
+          <div class="turnstile-wrap" id="turnstileWidget" aria-label="Security verification"></div>
+          <p class="safety-note">Rocky's replies are AI-generated perspective, not professional or emergency advice.</p>
+
+          <button class="button ask-button" id="askButton" type="button" disabled>Preparing Rocky...</button>
 
           <div class="answer" id="answerBox" aria-live="polite">
             <p class="answer-label">Rocky says</p>
@@ -581,6 +596,58 @@
     const savedCounter = Number(localStorage.getItem("rockyCounter") || 0);
     document.getElementById("rockyCounter").textContent = savedCounter;
 
+    let turnstileToken = "";
+    let turnstileWidgetId = null;
+
+    async function initializeTurnstile() {
+      const answerField = document.getElementById("rockyAnswer");
+      const button = document.getElementById("askButton");
+
+      try {
+        const response = await fetch("/rocky-config", {
+          headers: { "Accept": "application/json" },
+          cache: "no-store"
+        });
+        const config = await response.json();
+
+        if (!response.ok || !config.protected || !config.turnstileSiteKey) {
+          throw new Error("Protection is not configured");
+        }
+
+        if (!window.turnstile) {
+          throw new Error("Protection script did not load");
+        }
+
+        turnstileWidgetId = window.turnstile.render("#turnstileWidget", {
+          sitekey: config.turnstileSiteKey,
+          action: "ask_rocky",
+          appearance: "interaction-only",
+          size: "flexible",
+          theme: "dark",
+          callback(token) {
+            turnstileToken = token;
+            button.disabled = false;
+            button.textContent = "Ask Rocky";
+          },
+          "expired-callback"() {
+            turnstileToken = "";
+            button.disabled = true;
+            button.textContent = "Refreshing protection...";
+          },
+          "error-callback"() {
+            turnstileToken = "";
+            button.disabled = true;
+            button.textContent = "Protection unavailable";
+            answerField.textContent = "Rocky's safety check needs a moment. Refresh the page and try again.";
+          }
+        });
+      } catch (error) {
+        button.disabled = true;
+        button.textContent = "Protection unavailable";
+        answerField.textContent = "Rocky's safety protection is not ready yet.";
+      }
+    }
+
     async function askRocky() {
       const questionField = document.getElementById("rockyQuestion");
       const answerField = document.getElementById("rockyAnswer");
@@ -594,6 +661,13 @@
         return;
       }
 
+      if (!turnstileToken) {
+        answerField.textContent = "Rocky's safety check is still waking up. Give it a moment.";
+        return;
+      }
+
+      const requestToken = turnstileToken;
+      turnstileToken = "";
       button.disabled = true;
       button.textContent = "Rocky is thinking...";
       answerField.textContent = "The tide is turning. Give Rocky a moment.";
@@ -602,13 +676,17 @@
         const response = await fetch("/ask-rocky", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question, category })
+          body: JSON.stringify({
+            question,
+            category,
+            turnstileToken: requestToken
+          })
         });
-
-        if (!response.ok) throw new Error(`Request failed: ${response.status}`);
 
         const data = await response.json();
         answerField.textContent = data.answer || "The tide is quiet right now. Ask again in a moment.";
+
+        if (!response.ok) return;
 
         const nextCounter = Number(localStorage.getItem("rockyCounter") || 0) + 1;
         localStorage.setItem("rockyCounter", String(nextCounter));
@@ -616,11 +694,16 @@
       } catch (error) {
         answerField.textContent = "Rocky is quiet right now. Even rocks need a moment.";
       } finally {
-        button.disabled = false;
-        button.textContent = "Ask Rocky";
+        button.disabled = true;
+        button.textContent = "Refreshing protection...";
+
+        if (window.turnstile && turnstileWidgetId !== null) {
+          window.turnstile.reset(turnstileWidgetId);
+        }
       }
     }
 
+    window.addEventListener("load", initializeTurnstile);
     document.getElementById("askButton").addEventListener("click", askRocky);
     document.getElementById("rockyQuestion").addEventListener("keydown", event => {
       if ((event.ctrlKey || event.metaKey) && event.key === "Enter") askRocky();
