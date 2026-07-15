@@ -1,0 +1,93 @@
+PROJECT ROCKY
+
+LAUNCH ROADMAP
+
+VISION
+
+Build the world's first AI-powered pet rock companion.
+
+Create a daily habit users look forward to.
+
+Deliver wisdom, humor, perspective, and aloha to people around the world.
+
+PHASE 1 — FOUNDATION
+
+Completed:
+
+Domain registration
+Cloudflare setup
+Initial website deployment
+Rocky Mission
+Rocky Personality Bible
+Rocky Voice
+NT2 Principles
+
+PHASE 2 — WEBSITE
+
+Build:
+
+Professional homepage
+Rocky Mission page
+Email signup list
+App waitlist
+Investor information page
+Contact page
+
+PHASE 3 — APP MVP
+
+Core Features:
+
+AI Rocky personality
+Daily wisdom
+Weather-aware comments
+Location-aware comments
+Daily check-ins
+Memory system
+User streak tracking
+
+PHASE 4 — COLLECTIONS
+
+Rock Types:
+
+Lava Rocks
+Beach Rocks
+Volcano Rocks
+Crystal Rocks
+Rare Event Rocks
+
+Global Travel Passport
+
+PHASE 5 — PREMIUM
+
+Premium Features:
+
+Enhanced memory
+Cosmetic upgrades
+Travel passes
+Limited edition rocks
+Seasonal events
+
+PHASE 6 — LAUNCH
+
+Platforms:
+
+iPhone
+Android
+
+Targets:
+
+50,000 users
+5% premium conversion
+Strong daily engagement
+
+LONG-TERM GOAL
+
+Become the world's most loved source of daily perspective, humor, and island wisdom.
+
+Build a globally recognized AI companion brand.
+
+NT2 Forever.
+
+Build it once.
+Build it right.
+Move forward.

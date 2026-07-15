@@ -1,0 +1,72 @@
+PROJECT ROCKY
+
+NT2 PRINCIPLES
+
+NT2 stands for:
+
+Never Touch Twice.
+
+The purpose of NT2 is to eliminate wasted effort, reduce complexity, and maintain forward momentum.
+
+CORE RULE
+
+Build it once.
+Build it right.
+Move forward.
+
+DEVELOPMENT RULES
+
+Make one improvement at a time.
+Save immediately.
+Verify it works.
+Commit the change.
+Create a backup.
+Move forward.
+
+Never leave a working feature unprotected.
+
+BACKUP RULE
+
+Every work session ends with:
+
+Save
+Backup
+Verify
+
+No exceptions.
+
+DECISION RULE
+
+Progress over perfection.
+
+A working solution today is worth more than a perfect solution someday.
+
+FOCUS RULE
+
+Do not chase every idea.
+
+Finish what matters.
+
+SIMPLICITY RULE
+
+Complexity creates problems.
+
+Simple systems scale.
+
+ROCKY DAILY RULE
+
+One Improvement.
+
+One Commit.
+
+One Step Forward.
+
+COMPANY RULE
+
+Respect the lava.
+
+Respect the process.
+
+Respect the long game.
+
+NT2 Forever.

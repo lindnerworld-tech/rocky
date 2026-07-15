@@ -1,0 +1,186 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>ROCKY | AI Pet Rock Companion</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{margin:0;font-family:Arial,sans-serif;background:#f5f0e6;color:#222;line-height:1.6}
+.hero{background:#1f4f73;color:white;text-align:center;padding:90px 20px}
+.hero h1{font-size:72px;margin:0}
+.hero p{font-size:24px}
+.section{max-width:900px;margin:auto;padding:50px 20px}
+.card{background:white;padding:25px;margin:20px 0;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+.footer{background:#222;color:white;text-align:center;padding:40px}
+</style>
+</head>
+<body>
+
+<div class="hero">
+<h1>ROCKY</h1>
+<p>Ancient Wisdom. Island Humor. Daily Perspective.</p>
+<p>The World's First AI Pet Rock Companion</p>
+</div>
+
+<div class="section">
+
+<div class="card">
+<h2>Meet Rocky</h2>
+<p>Rocky is a 4-billion-year-old AI pet rock companion inspired by Hawaii, geology, patience, humor, and aloha.</p>
+<p>Rocky helps people slow down, laugh more, stress less, and remember what matters.</p>
+</div>
+
+<div class="card">
+<h2>The Rocky Voice</h2>
+<p>Rocky is not a coach, guru, celebrity, or motivational speaker.</p>
+<p>Rocky is wisdom earned through time.</p>
+<p>Rocky speaks calmly, never panics, never argues, and says what needs to be said and nothing more.</p>
+</div>
+
+<div class="card">
+<h2>NT2 — Never Touch Twice</h2>
+<p>Build it once.<br>Build it right.<br>Move forward.</p>
+<p>One improvement. One commit. One step forward.</p>
+</div>
+
+<div class="card">
+<h2>Coming Soon</h2>
+<p>📱 iPhone & Android apps</p>
+<p>🤖 AI Rocky personality</p>
+<p>🌋 Weather-aware Rocky wisdom</p>
+<p>🏄 Surf and island conditions</p>
+<p>🪨 Rock collections</p>
+<p>🌎 Global travel passport</p>
+</div>
+
+<div class="card">
+<h2>Mission</h2>
+<p>To become the world’s most loved daily source of perspective, positivity, humor, and island wisdom.</p>
+</div>
+
+</div>
+
+<div class="footer">
+<h2>PROJECT ROCKY</h2>
+<p>NT2 Forever</p>
+</div>
+<section style="padding:40px; text-align:center; background:#f4efe7;">
+  <h2>Ask Rocky</h2>
+
+<h2>Ask Rocky</h2>
+
+<div style="margin:25px auto; padding:20px; max-width:600px; background:white; border-radius:12px;">
+  <h3>🌞 Daily Rocky Wisdom</h3>
+  <p id="dailyRockyWisdom" style="font-size:20px; font-style:italic;">
+    Loading today's wisdom...
+  </p>
+</div>
+
+<p><strong>Choose a Rocky category:</strong></p>  
+  <p>Ask Rocky for wisdom, courage, or perspective.</p>
+<p><strong>Choose a Rocky category:</strong></p>
+
+<select id="rockyCategory">
+  <option value="life">🌊 Life</option>
+  <option value="money">💰 Money</option>
+  <option value="business">🚀 Business</option>
+  <option value="relationships">❤️ Relationships</option>
+  <option value="courage">🌋 Courage</option>
+</select>
+
+<br><br>
+
+<input
+  id="rockyQuestion"
+  type="text"
+  placeholder="What do you want to ask Rocky?"
+>
+  <input 
+    id="rockyQuestion" 
+    type="text" 
+    placeholder="What do you want to ask Rocky?"
+    style="padding:12px; width:80%; max-width:500px; border-radius:8px; border:1px solid #999;"
+  >
+
+  <br><br>
+
+  <button 
+    onclick="askRocky()"
+    style="padding:12px 25px; border:none; border-radius:8px; background:#5b3a29; color:white; cursor:pointer;"
+  >
+    Ask Rocky
+  </button>
+
+  <h3 style="margin-top:30px;">Rocky Says:</h3>
+  <p id="rockyAnswer" style="font-size:20px; font-style:italic;">
+   <p style="margin-top:20px; font-weight:bold;">
+  Questions Asked to Rocky: <span id="rockyCounter">0</span>
+</p> 
+    ...
+  </p>
+</section>
+
+<script>
+async function askRocky() {
+const question =
+document.getElementById("rockyQuestion").value;
+
+const category =
+document.getElementById("rockyCategory").value;
+
+document.getElementById("rockyAnswer").innerText =
+"AI ROCKY TEST"
+
+try {
+const response = await fetch("/ask-rocky", {
+method: "POST",
+headers: {
+"Content-Type": "application/json"
+},
+body: JSON.stringify({
+question,
+category
+})
+});
+
+const data = await response.json();
+
+document.getElementById("rockyAnswer").innerText =
+  data.answer;
+
+} catch (error) {
+document.getElementById("rockyAnswer").innerText =
+"WEBSITE ERROR: Rocky could not reach the AI function.";
+}
+
+let counter = localStorage.getItem("rockyCounter") || 0;
+counter++;
+localStorage.setItem("rockyCounter", counter);
+
+document.getElementById("rockyCounter").innerText =
+counter;
+}
+window.onload = function() {
+  const savedCounter = localStorage.getItem("rockyCounter") || 0;
+  document.getElementById("rockyCounter").innerText = savedCounter;
+};
+function showDailyRockyWisdom() {
+  const dailyQuotes = [
+    "The ocean does not hurry the tide. Neither should you.",
+    "Small steps still move mountains.",
+    "You are not stuck. You are forming.",
+    "Even lava cools into something strong.",
+    "Today is one stone in the path. Keep walking."
+  ];
+
+  const today = new Date();
+  const quoteIndex = today.getDate() % dailyQuotes.length;
+
+  document.getElementById("dailyRockyWisdom").innerText =
+    dailyQuotes[quoteIndex];
+}
+
+showDailyRockyWisdom();
+</script>
+</body>
+</html>
