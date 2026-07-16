@@ -6,8 +6,9 @@
   "keep_vars": true,
   "vars": {
     "ROCKY_AI_ENABLED": "true",
-    "ROCKY_DAILY_IP_LIMIT": "3",
-    "ROCKY_GLOBAL_DAILY_LIMIT": "500"
+    "ROCKY_DAILY_IP_LIMIT": "1",
+    "ROCKY_GLOBAL_DAILY_LIMIT": "500",
+    "ROCKY_IDENTITY_ENABLED": "false"
   },
   "observability": {
     "enabled": true
@@ -52,7 +53,8 @@
       "/index.html",
       "/ask-rocky",
       "/rocky-config",
-      "/health"
+      "/health",
+      "/me"
     ]
   },
   "env": {
@@ -60,9 +62,20 @@
       "name": "rocky-github-preview-staging",
       "vars": {
         "ROCKY_AI_ENABLED": "true",
-        "ROCKY_DAILY_IP_LIMIT": "3",
-        "ROCKY_GLOBAL_DAILY_LIMIT": "25"
+        "ROCKY_DAILY_IP_LIMIT": "1",
+        "ROCKY_GLOBAL_DAILY_LIMIT": "25",
+        "ROCKY_IDENTITY_ENABLED": "true",
+        "CLERK_PUBLISHABLE_KEY": "pk_test_cHJvbW90ZWQtcGVnYXN1cy01OC5jbGVyay5hY2NvdW50cy5kZXYk",
+        "CLERK_JWT_KEY": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoZ8yPPSZlrUBIro56tkV\nEELa8afGDMhao30U79/LhoGPQr4/pXM9E7kTDSxGsIOb/tEikWfdZYbVOuyFZ2+w\neYEBqeFl2dTbdno8esr7rQSdR79fzwOJL6VWXDVCVXGL51f1i6a4VnwGyp2brqGJ\nLBKO0sniBgCOhNncED12CgPjagfXIOm2a3id9S9is4m0/1iajKHybXzz1gSiUKbP\nzzlS64kzIAmzAB2nblzVXtcrcgN6h6NoFn7z1jDbYm5TnwbuYlhS/ns4bnMplkpC\nmwVwSAW5O5SGOzqSpBnAivKguIDvf+ulz6O/RgwR6NHFKQV5GQoj5co/KFBrj5pG\nCQIDAQAB\n-----END PUBLIC KEY-----"
       },
+      "d1_databases": [
+        {
+          "binding": "ROCKY_DB",
+          "database_name": "rocky-identity-staging",
+          "database_id": "675ba361-fbb3-4b36-a2c9-aa3f92cedd08",
+          "migrations_dir": "migrations"
+        }
+      ],
       "ratelimits": [
         {
           "name": "IP_RATE_LIMITER",
@@ -103,7 +116,8 @@
           "/index.html",
           "/ask-rocky",
           "/rocky-config",
-          "/health"
+          "/health",
+          "/me"
         ]
       }
     }

@@ -38,6 +38,9 @@ function makeEnv(overrides = {}) {
         return {
           async consume() {
             return { allowed: true };
+          },
+          async consumeGlobal() {
+            return { allowed: true };
           }
         };
       }
@@ -234,4 +237,102 @@ test("oversized body is rejected", async () => {
   }));
 
   assert.equal(result.status, 413);
+});
+
+test("authenticated Plus access uses the account allowance", async t => {
+  const originalFetch = globalThis.fetch;
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  globalThis.fetch = async url => {
+    if (String(url).includes("turnstile")) {
+      return Response.json({
+        success: true,
+        hostname: "rocky.test",
+        action: "ask_rocky"
+      });
+    }
+
+    return Response.json({
+      output: [{
+        content: [{ type: "output_text", text: "Steady as the tide." }]
+      }]
+    });
+  };
+
+  let allowanceUserId = "";
+  const result = await responseJson(await onRequestPost({
+    request: makeRequest({
+      question: "What now?",
+      category: "life",
+      turnstileToken: "valid-token"
+    }),
+    env: makeEnv({ ROCKY_IDENTITY_ENABLED: "true" }),
+    async resolveIdentity() {
+      return {
+        enabled: true,
+        authenticated: true,
+        userId: "user_rocky"
+      };
+    },
+    async consumeIdentityAllowance(env, userId) {
+      allowanceUserId = userId;
+      return {
+        allowed: true,
+        access: {
+          authenticated: true,
+          plan: "plus",
+          dailyLimit: 20,
+          used: 3,
+          remaining: 17
+        }
+      };
+    }
+  }));
+
+  assert.equal(result.status, 200);
+  assert.equal(allowanceUserId, "user_rocky");
+  assert.equal(result.body.access.plan, "plus");
+  assert.equal(result.body.access.remaining, 17);
+});
+
+test("an invalid identity session is rejected instead of treated as a guest", async t => {
+  const originalFetch = globalThis.fetch;
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  let openAiCalled = false;
+  globalThis.fetch = async url => {
+    if (String(url).includes("turnstile")) {
+      return Response.json({
+        success: true,
+        hostname: "rocky.test",
+        action: "ask_rocky"
+      });
+    }
+
+    openAiCalled = true;
+    return Response.json({});
+  };
+
+  const result = await responseJson(await onRequestPost({
+    request: makeRequest({
+      question: "Hello?",
+      turnstileToken: "valid-token"
+    }),
+    env: makeEnv({ ROCKY_IDENTITY_ENABLED: "true" }),
+    async resolveIdentity() {
+      return {
+        enabled: true,
+        authenticated: false,
+        error: "invalid_session"
+      };
+    }
+  }));
+
+  assert.equal(result.status, 401);
+  assert.equal(openAiCalled, false);
+  assert.match(result.body.answer, /sign-in/i);
 });

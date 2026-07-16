@@ -1,7 +1,12 @@
+import {
+  authenticateRequestIdentity,
+  consumeIdentityAllowance
+} from "./identity.js";
+
 const MAX_BODY_BYTES = 4096;
 const MAX_QUESTION_CHARS = 1000;
 const MAX_TURNSTILE_TOKEN_CHARS = 2048;
-const DEFAULT_DAILY_IP_LIMIT = 3;
+const DEFAULT_DAILY_IP_LIMIT = 1;
 const DEFAULT_GLOBAL_DAILY_LIMIT = 500;
 
 const ALLOWED_CATEGORIES = new Set([
@@ -197,6 +202,54 @@ async function consumeDailyAllowance(env, ipKey) {
     };
   }
 
+  const remaining = Number.isFinite(decision.ipRemaining)
+    ? decision.ipRemaining
+    : Math.max(0, ipLimit - 1);
+
+  return {
+    allowed: true,
+    access: {
+      authenticated: false,
+      plan: "guest",
+      dailyLimit: ipLimit,
+      used: Math.max(0, ipLimit - remaining),
+      remaining
+    }
+  };
+}
+
+async function consumeGlobalAllowance(env) {
+  if (!env.USAGE_LIMITER) {
+    return {
+      allowed: false,
+      response: jsonResponse(
+        { answer: "Rocky's daily counter is not ready yet." },
+        503
+      )
+    };
+  }
+
+  const globalLimit = boundedInteger(
+    env.ROCKY_GLOBAL_DAILY_LIMIT,
+    DEFAULT_GLOBAL_DAILY_LIMIT,
+    1,
+    100000
+  );
+  const utcDay = new Date().toISOString().slice(0, 10);
+  const limiter = env.USAGE_LIMITER.getByName(utcDay);
+  const decision = await limiter.consumeGlobal(globalLimit);
+
+  if (!decision.allowed) {
+    return {
+      allowed: false,
+      response: jsonResponse(
+        { answer: "Rocky has reached today's safety limit. The tide resets tomorrow." },
+        429,
+        { "Retry-After": String(secondsUntilUtcMidnight()) }
+      )
+    };
+  }
+
   return { allowed: true };
 }
 
@@ -277,7 +330,53 @@ export async function onRequestPost(context) {
     );
     if (!turnstile.valid) return turnstile.response;
 
-    const dailyAllowance = await consumeDailyAllowance(env, ipKey);
+    const resolveIdentity = context.resolveIdentity || authenticateRequestIdentity;
+    const useIdentityAllowance = context.consumeIdentityAllowance ||
+      consumeIdentityAllowance;
+    const identity = await resolveIdentity(request, env);
+
+    if (identity.error === "identity_not_configured") {
+      return jsonResponse(
+        { answer: "Rocky's sign-in is not ready yet. Try again shortly." },
+        503
+      );
+    }
+
+    if (identity.error === "invalid_session") {
+      return jsonResponse(
+        { answer: "Your Rocky sign-in needs refreshing. Please sign in again." },
+        401
+      );
+    }
+
+    let dailyAllowance;
+    if (identity.authenticated) {
+      const globalAllowance = await consumeGlobalAllowance(env);
+      if (!globalAllowance.allowed) return globalAllowance.response;
+
+      try {
+        const decision = await useIdentityAllowance(env, identity.userId);
+        if (!decision.allowed) {
+          return jsonResponse(
+            {
+              answer: "Rocky has shared today's Free perspective. Come back tomorrow or choose Plus for more.",
+              access: decision.access
+            },
+            429,
+            { "Retry-After": String(secondsUntilUtcMidnight()) }
+          );
+        }
+        dailyAllowance = decision;
+      } catch {
+        return jsonResponse(
+          { answer: "Rocky's account counter is not ready yet. Try again shortly." },
+          503
+        );
+      }
+    } else {
+      dailyAllowance = await consumeDailyAllowance(env, ipKey);
+    }
+
     if (!dailyAllowance.allowed) return dailyAllowance.response;
 
     const rockyPrompt = `
@@ -371,7 +470,8 @@ ${question}
       ?.text;
 
     return jsonResponse({
-      answer: answer || "The tide is quiet right now. Ask me again in a moment."
+      answer: answer || "The tide is quiet right now. Ask me again in a moment.",
+      access: dailyAllowance.access
     });
   } catch (error) {
     console.error("Ask Rocky error:", error);

@@ -1,0 +1,11 @@
+{
+  "name": "project-rocky",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@clerk/backend": "3.11.7"
+  }
+}
