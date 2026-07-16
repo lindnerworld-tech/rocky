@@ -7,7 +7,8 @@ import {
   consumeIdentityAllowance,
   FREE_DAILY_LIMIT,
   identityConfiguration,
-  PLUS_DAILY_LIMIT
+  PLUS_DAILY_LIMIT,
+  refundIdentityAllowance
 } from "../WEBSITE/functions/identity.js";
 
 class FakeStatement {
@@ -62,6 +63,16 @@ class FakeStatement {
       const current = this.db.usage.get(key) || 0;
       if (current >= limit) return null;
       const next = current + 1;
+      this.db.usage.set(key, next);
+      return { answer_count: next };
+    }
+
+    if (this.sql.includes("UPDATE usage_daily")) {
+      const [, userId, utcDay] = this.params;
+      const key = `${userId}:${utcDay}`;
+      const current = this.db.usage.get(key) || 0;
+      if (current <= 0) return null;
+      const next = current - 1;
       this.db.usage.set(key, next);
       return { answer_count: next };
     }
@@ -167,4 +178,16 @@ test("D1 gives an active Plus account twenty answers per day", async () => {
   assert.equal(decision.allowed, true);
   assert.equal(decision.access.dailyLimit, PLUS_DAILY_LIMIT);
   assert.equal(decision.access.remaining, PLUS_DAILY_LIMIT - 1);
+});
+
+test("D1 refunds an answer when the provider fails", async () => {
+  const db = new FakeD1();
+  const env = { ROCKY_DB: db };
+  const now = new Date("2026-07-16T12:00:00.000Z");
+
+  await consumeIdentityAllowance(env, "user_refund", now);
+  const access = await refundIdentityAllowance(env, "user_refund", now);
+
+  assert.equal(access.used, 0);
+  assert.equal(access.remaining, 1);
 });

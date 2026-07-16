@@ -1,6 +1,7 @@
 import {
   authenticateRequestIdentity,
-  consumeIdentityAllowance
+  consumeIdentityAllowance,
+  refundIdentityAllowance
 } from "./identity.js";
 
 const MAX_BODY_BYTES = 4096;
@@ -253,6 +254,17 @@ async function consumeGlobalAllowance(env) {
   return { allowed: true };
 }
 
+async function refundFailedIdentityAttempt(identity, env, refundAllowance) {
+  if (!identity.authenticated) return null;
+
+  try {
+    return await refundAllowance(env, identity.userId);
+  } catch (error) {
+    console.error("Identity allowance refund failed:", error);
+    return null;
+  }
+}
+
 export async function onRequestPost(context) {
   try {
     const { request, env } = context;
@@ -333,6 +345,8 @@ export async function onRequestPost(context) {
     const resolveIdentity = context.resolveIdentity || authenticateRequestIdentity;
     const useIdentityAllowance = context.consumeIdentityAllowance ||
       consumeIdentityAllowance;
+    const refundAllowance = context.refundIdentityAllowance ||
+      refundIdentityAllowance;
     const identity = await resolveIdentity(request, env);
 
     if (identity.error === "identity_not_configured") {
@@ -441,24 +455,46 @@ Question:
 ${question}
 `;
 
-    const response = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "gpt-4.1-mini",
-        input: rockyPrompt,
-        max_output_tokens: 160,
-        store: false
-      })
-    });
+    let response;
+    try {
+      response = await fetch("https://api.openai.com/v1/responses", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${env.OPENAI_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "gpt-4.1-mini",
+          input: rockyPrompt,
+          max_output_tokens: 160,
+          store: false
+        })
+      });
+    } catch (error) {
+      console.error("OpenAI API request failed:", error);
+      const access = await refundFailedIdentityAttempt(
+        identity,
+        env,
+        refundAllowance
+      );
+      return jsonResponse({
+        answer: "The tide is quiet right now. Ask Rocky again in a moment.",
+        ...(access ? { access } : {})
+      }, 502);
+    }
 
     if (!response.ok) {
       console.error("OpenAI API error status:", response.status);
+      const access = await refundFailedIdentityAttempt(
+        identity,
+        env,
+        refundAllowance
+      );
       return jsonResponse(
-        { answer: "The tide is quiet right now. Ask Rocky again in a moment." },
+        {
+          answer: "The tide is quiet right now. Ask Rocky again in a moment.",
+          ...(access ? { access } : {})
+        },
         502
       );
     }
@@ -469,8 +505,20 @@ ${question}
       .find(content => content.type === "output_text")
       ?.text;
 
+    if (!answer) {
+      const access = await refundFailedIdentityAttempt(
+        identity,
+        env,
+        refundAllowance
+      );
+      return jsonResponse({
+        answer: "The tide is quiet right now. Ask Rocky again in a moment.",
+        ...(access ? { access } : {})
+      }, 502);
+    }
+
     return jsonResponse({
-      answer: answer || "The tide is quiet right now. Ask me again in a moment.",
+      answer,
       access: dailyAllowance.access
     });
   } catch (error) {

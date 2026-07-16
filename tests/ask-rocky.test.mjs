@@ -336,3 +336,68 @@ test("an invalid identity session is rejected instead of treated as a guest", as
   assert.equal(openAiCalled, false);
   assert.match(result.body.answer, /sign-in/i);
 });
+
+test("provider failure refunds an authenticated daily allowance", async t => {
+  const originalFetch = globalThis.fetch;
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  globalThis.fetch = async url => {
+    if (String(url).includes("turnstile")) {
+      return Response.json({
+        success: true,
+        hostname: "rocky.test",
+        action: "ask_rocky"
+      });
+    }
+
+    return Response.json(
+      { error: { message: "temporary provider failure" } },
+      { status: 429 }
+    );
+  };
+
+  let refundedUserId = "";
+  const result = await responseJson(await onRequestPost({
+    request: makeRequest({
+      question: "What now?",
+      category: "life",
+      turnstileToken: "valid-token"
+    }),
+    env: makeEnv({ ROCKY_IDENTITY_ENABLED: "true" }),
+    async resolveIdentity() {
+      return {
+        enabled: true,
+        authenticated: true,
+        userId: "user_refund"
+      };
+    },
+    async consumeIdentityAllowance() {
+      return {
+        allowed: true,
+        access: {
+          authenticated: true,
+          plan: "free",
+          dailyLimit: 1,
+          used: 1,
+          remaining: 0
+        }
+      };
+    },
+    async refundIdentityAllowance(env, userId) {
+      refundedUserId = userId;
+      return {
+        authenticated: true,
+        plan: "free",
+        dailyLimit: 1,
+        used: 0,
+        remaining: 1
+      };
+    }
+  }));
+
+  assert.equal(result.status, 502);
+  assert.equal(refundedUserId, "user_refund");
+  assert.equal(result.body.access.remaining, 1);
+});

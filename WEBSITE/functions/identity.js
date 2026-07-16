@@ -179,6 +179,22 @@ export async function consumeIdentityAllowance(env, userId, now = new Date()) {
   };
 }
 
+export async function refundIdentityAllowance(env, userId, now = new Date()) {
+  if (!env.ROCKY_DB) throw new Error("ROCKY_DB is not configured");
+
+  const nowIso = now.toISOString();
+  const utcDay = nowIso.slice(0, 10);
+  await env.ROCKY_DB.prepare(
+    `UPDATE usage_daily
+     SET answer_count = answer_count - 1,
+         updated_at = ?
+     WHERE user_id = ? AND usage_date = ? AND answer_count > 0
+     RETURNING answer_count`
+  ).bind(nowIso, userId, utcDay).first();
+
+  return getIdentityAccess(env, userId, now);
+}
+
 export async function identityStatus(request, env, resolveIdentity = authenticateRequestIdentity) {
   const identity = await resolveIdentity(request, env);
 
