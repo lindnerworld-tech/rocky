@@ -1,5 +1,9 @@
 import { DurableObject } from "cloudflare:workers";
 import { onRequestPost } from "./WEBSITE/functions/ask-rocky.js";
+import {
+  canonicalRedirectFor,
+  healthState
+} from "./WEBSITE/functions/site-routing.js";
 
 const SECURITY_HEADERS = {
   "Cache-Control": "no-store",
@@ -78,6 +82,31 @@ export class RockyUsageLimiter extends DurableObject {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    const canonicalUrl = canonicalRedirectFor(url);
+
+    if (canonicalUrl) {
+      return new Response(null, {
+        status: 308,
+        headers: {
+          "Cache-Control": "public, max-age=3600",
+          "Location": canonicalUrl,
+          "X-Content-Type-Options": "nosniff"
+        }
+      });
+    }
+
+    if (url.pathname === "/health") {
+      if (request.method !== "GET") {
+        return jsonResponse(
+          { error: "method_not_allowed" },
+          405,
+          { Allow: "GET" }
+        );
+      }
+
+      const health = healthState(env);
+      return jsonResponse(health.body, health.status);
+    }
 
     if (url.pathname === "/rocky-config") {
       if (request.method !== "GET") {
