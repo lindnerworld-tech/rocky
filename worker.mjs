@@ -5,6 +5,11 @@ import {
   identityStatus
 } from "./WEBSITE/functions/identity.js";
 import {
+  checkoutContext,
+  handlePaddleWebhook,
+  paymentsConfiguration
+} from "./WEBSITE/functions/payments.js";
+import {
   canonicalRedirectFor,
   healthState
 } from "./WEBSITE/functions/site-routing.js";
@@ -140,7 +145,8 @@ export default {
         protected: Boolean(
           env.TURNSTILE_SITE_KEY && env.TURNSTILE_SECRET_KEY
         ),
-        identity: identityConfiguration(env)
+        identity: identityConfiguration(env),
+        payments: paymentsConfiguration(env)
       });
     }
 
@@ -155,6 +161,24 @@ export default {
 
       const result = await identityStatus(request, env);
       return jsonResponse(result.body, result.status);
+    }
+
+    if (url.pathname === "/paddle-checkout-context") {
+      if (request.method !== "GET") {
+        return jsonResponse(
+          { error: "method_not_allowed" },
+          405,
+          { Allow: "GET" }
+        );
+      }
+
+      const result = await checkoutContext(request, env);
+      return jsonResponse(result.body, result.status);
+    }
+
+    if (url.pathname === "/paddle-webhook") {
+      const result = await handlePaddleWebhook(request, env);
+      return jsonResponse(result.body, result.status, result.headers);
     }
 
     if (url.pathname === "/ask-rocky") {
