@@ -1,6 +1,10 @@
 import { DurableObject } from "cloudflare:workers";
 import { onRequestPost } from "./WEBSITE/functions/ask-rocky.js";
 import {
+  identityConfiguration,
+  identityStatus
+} from "./WEBSITE/functions/identity.js";
+import {
   canonicalRedirectFor,
   healthState
 } from "./WEBSITE/functions/site-routing.js";
@@ -54,6 +58,20 @@ export class RockyUsageLimiter extends DurableObject {
       allowed: true,
       globalRemaining: Math.max(0, globalLimit - globalCount - 1),
       ipRemaining: Math.max(0, ipLimit - ipCount - 1)
+    };
+  }
+
+  consumeGlobal(globalLimit) {
+    const globalCount = this.#countFor("global");
+
+    if (globalCount >= globalLimit) {
+      return { allowed: false, reason: "global_daily_limit" };
+    }
+
+    this.#increment("global");
+    return {
+      allowed: true,
+      globalRemaining: Math.max(0, globalLimit - globalCount - 1)
     };
   }
 
@@ -121,8 +139,22 @@ export default {
         turnstileSiteKey: env.TURNSTILE_SITE_KEY || "",
         protected: Boolean(
           env.TURNSTILE_SITE_KEY && env.TURNSTILE_SECRET_KEY
-        )
+        ),
+        identity: identityConfiguration(env)
       });
+    }
+
+    if (url.pathname === "/me") {
+      if (request.method !== "GET") {
+        return jsonResponse(
+          { error: "method_not_allowed" },
+          405,
+          { Allow: "GET" }
+        );
+      }
+
+      const result = await identityStatus(request, env);
+      return jsonResponse(result.body, result.status);
     }
 
     if (url.pathname === "/ask-rocky") {

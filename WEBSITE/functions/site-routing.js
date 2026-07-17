@@ -16,8 +16,12 @@ export function healthState(env) {
     env.TURNSTILE_SITE_KEY && env.TURNSTILE_SECRET_KEY
   );
   const aiEnabled = env.ROCKY_AI_ENABLED !== "false";
+  const identityEnabled = env.ROCKY_IDENTITY_ENABLED === "true";
+  const identityReady = !identityEnabled || Boolean(
+    env.CLERK_PUBLISHABLE_KEY && env.CLERK_JWT_KEY && env.ROCKY_DB
+  );
   const ready = Boolean(
-    protectedByTurnstile && aiEnabled && env.OPENAI_API_KEY
+    protectedByTurnstile && aiEnabled && env.OPENAI_API_KEY && identityReady
   );
 
   return {
@@ -26,7 +30,9 @@ export function healthState(env) {
       status: ready ? "ok" : "degraded",
       service: "project-rocky",
       protected: protectedByTurnstile,
-      aiEnabled
+      aiEnabled,
+      identityEnabled,
+      identityReady
     }
   };
 }

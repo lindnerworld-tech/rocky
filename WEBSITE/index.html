@@ -86,6 +86,27 @@
       font-weight: 750;
     }
 
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    button.nav-link {
+      cursor: pointer;
+      font: inherit;
+    }
+
+    .nav-link[hidden],
+    .identity-user[hidden] { display: none; }
+
+    .identity-user {
+      display: grid;
+      place-items: center;
+      min-width: 38px;
+      min-height: 38px;
+    }
+
     .hero {
       position: relative;
       isolation: isolate;
@@ -464,7 +485,8 @@
 
     @media (max-width: 560px) {
       .site-nav { width: min(100% - 28px, 1180px); padding-top: 18px; }
-      .nav-link { padding: 7px 12px; font-size: .83rem; }
+      .nav-actions { gap: 7px; }
+      .nav-link { padding: 7px 11px; font-size: .8rem; }
       .hero { min-height: 720px; background-position: 71% center; }
       .hero-inner, .section { width: min(100% - 28px, 1180px); }
       h1 { font-size: clamp(3.4rem, 18vw, 5.2rem); }
@@ -487,7 +509,11 @@
       <span class="brand-mark" aria-hidden="true"></span>
       ROCKY
     </a>
-    <a class="nav-link" href="#ask-rocky">Ask Rocky</a>
+    <div class="nav-actions">
+      <a class="nav-link" href="#ask-rocky">Ask Rocky</a>
+      <button class="nav-link" id="identityButton" type="button" hidden>Sign in</button>
+      <div class="identity-user" id="identityUserButton" hidden></div>
+    </div>
   </nav>
 
   <header class="hero" id="top">
@@ -541,7 +567,7 @@
           <p class="section-kicker" style="color:#73d4d1">A quieter answer</p>
           <h2>Ask Rocky.</h2>
           <p>Bring the question that has been rattling around in your head. Rocky will answer briefly—because four billion years teaches you not to ramble.</p>
-          <div class="counter">Questions asked on this device: <span id="rockyCounter">0</span></div>
+          <div class="counter" id="accessCounter">Questions asked on this device: <span id="rockyCounter">0</span></div>
         </div>
 
         <div class="ask-card">
@@ -599,19 +625,151 @@
 
     let turnstileToken = "";
     let turnstileWidgetId = null;
+    let rockyConfigPromise = null;
+    let identityReady = false;
+    let userButtonMounted = false;
+
+    function loadRockyConfig() {
+      if (!rockyConfigPromise) {
+        rockyConfigPromise = fetch("/rocky-config", {
+          headers: { "Accept": "application/json" },
+          cache: "no-store"
+        }).then(async response => {
+          const config = await response.json();
+          if (!response.ok) throw new Error("Rocky configuration is unavailable");
+          return config;
+        });
+      }
+
+      return rockyConfigPromise;
+    }
+
+    function loadScript(src, attributes = {}) {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = src;
+        script.defer = true;
+        script.crossOrigin = "anonymous";
+        Object.entries(attributes).forEach(([name, value]) => {
+          script.setAttribute(name, value);
+        });
+        script.addEventListener("load", resolve, { once: true });
+        script.addEventListener("error", () => reject(new Error(`Could not load ${src}`)), { once: true });
+        document.head.appendChild(script);
+      });
+    }
+
+    function clerkDomainFrom(publishableKey) {
+      const encoded = publishableKey.split("_")[2] || "";
+      const normalized = encoded.replace(/-/g, "+").replace(/_/g, "/");
+      const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+      return atob(padded).slice(0, -1);
+    }
+
+    function showAccess(access) {
+      if (!access) return;
+
+      const counter = document.getElementById("accessCounter");
+      if (access.authenticated) {
+        const planName = access.plan === "plus" ? "Rocky Plus" : "Rocky Free";
+        counter.textContent = `${planName}: ${access.remaining} of ${access.dailyLimit} answers left today`;
+      } else {
+        counter.textContent = `Daily guest answer: ${access.remaining} of ${access.dailyLimit} left`;
+      }
+    }
+
+    async function sessionToken() {
+      if (!identityReady || !window.Clerk?.session) return "";
+
+      try {
+        return await window.Clerk.session.getToken();
+      } catch {
+        return "";
+      }
+    }
+
+    async function refreshIdentityAccess() {
+      const token = await sessionToken();
+      const headers = { "Accept": "application/json" };
+      if (token) headers.Authorization = `Bearer ${token}`;
+
+      const response = await fetch("/me", { headers, cache: "no-store" });
+      if (!response.ok) return;
+      showAccess(await response.json());
+    }
+
+    async function renderIdentity() {
+      const button = document.getElementById("identityButton");
+      const userButton = document.getElementById("identityUserButton");
+
+      if (window.Clerk?.isSignedIn) {
+        button.hidden = true;
+        userButton.hidden = false;
+        if (!userButtonMounted) {
+          window.Clerk.mountUserButton(userButton);
+          userButtonMounted = true;
+        }
+      } else {
+        if (userButtonMounted) {
+          window.Clerk.unmountUserButton(userButton);
+          userButtonMounted = false;
+        }
+        userButton.hidden = true;
+        button.hidden = false;
+        button.disabled = false;
+        button.textContent = "Sign in";
+      }
+
+      await refreshIdentityAccess();
+    }
+
+    async function initializeIdentity() {
+      const button = document.getElementById("identityButton");
+
+      try {
+        const config = await loadRockyConfig();
+        if (!config.identity?.enabled) return;
+
+        button.hidden = false;
+        if (!config.identity.ready || !config.identity.publishableKey) {
+          button.disabled = true;
+          button.textContent = "Sign-in soon";
+          return;
+        }
+
+        button.disabled = true;
+        button.textContent = "Preparing sign-in...";
+        const clerkDomain = clerkDomainFrom(config.identity.publishableKey);
+        if (!clerkDomain) throw new Error("Invalid sign-in configuration");
+
+        await loadScript(`https://${clerkDomain}/npm/@clerk/ui@1/dist/ui.browser.js`);
+        await loadScript(
+          `https://${clerkDomain}/npm/@clerk/clerk-js@6/dist/clerk.browser.js`,
+          { "data-clerk-publishable-key": config.identity.publishableKey }
+        );
+        await window.Clerk.load({
+          ui: { ClerkUI: window.__internal_ClerkUICtor }
+        });
+
+        identityReady = true;
+        button.addEventListener("click", () => window.Clerk.openSignIn());
+        window.Clerk.addListener(renderIdentity);
+        await renderIdentity();
+      } catch {
+        button.hidden = false;
+        button.disabled = true;
+        button.textContent = "Sign-in unavailable";
+      }
+    }
 
     async function initializeTurnstile() {
       const answerField = document.getElementById("rockyAnswer");
       const button = document.getElementById("askButton");
 
       try {
-        const response = await fetch("/rocky-config", {
-          headers: { "Accept": "application/json" },
-          cache: "no-store"
-        });
-        const config = await response.json();
+        const config = await loadRockyConfig();
 
-        if (!response.ok || !config.protected || !config.turnstileSiteKey) {
+        if (!config.protected || !config.turnstileSiteKey) {
           throw new Error("Protection is not configured");
         }
 
@@ -676,9 +834,13 @@
       answerField.textContent = "The tide is turning. Give Rocky a moment.";
 
       try {
+        const token = await sessionToken();
+        const headers = { "Content-Type": "application/json" };
+        if (token) headers.Authorization = `Bearer ${token}`;
+
         const response = await fetch("/ask-rocky", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify({
             question,
             category,
@@ -688,12 +850,14 @@
 
         const data = await response.json();
         answerField.textContent = data.answer || "The tide is quiet right now. Ask again in a moment.";
+        showAccess(data.access);
 
         if (!response.ok) return;
 
         const nextCounter = Number(localStorage.getItem("rockyCounter") || 0) + 1;
         localStorage.setItem("rockyCounter", String(nextCounter));
-        document.getElementById("rockyCounter").textContent = nextCounter;
+        const deviceCounter = document.getElementById("rockyCounter");
+        if (deviceCounter) deviceCounter.textContent = nextCounter;
       } catch (error) {
         answerField.textContent = "Rocky is quiet right now. Even rocks need a moment.";
       } finally {
@@ -706,7 +870,10 @@
       }
     }
 
-    window.addEventListener("load", initializeTurnstile);
+    window.addEventListener("load", () => {
+      initializeTurnstile();
+      initializeIdentity();
+    });
     document.getElementById("askButton").addEventListener("click", askRocky);
     document.getElementById("rockyQuestion").addEventListener("keydown", event => {
       if ((event.ctrlKey || event.metaKey) && event.key === "Enter") askRocky();
