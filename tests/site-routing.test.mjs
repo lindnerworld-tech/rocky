@@ -48,6 +48,34 @@ test("health is ready only when AI and Turnstile are configured", () => {
   assert.equal(stopped.body.status, "degraded");
 });
 
+test("health fails closed when enabled payments are incomplete", () => {
+  const degraded = healthState({
+    OPENAI_API_KEY: "configured",
+    ROCKY_AI_ENABLED: "true",
+    TURNSTILE_SITE_KEY: "configured",
+    TURNSTILE_SECRET_KEY: "configured",
+    ROCKY_PAYMENTS_ENABLED: "true",
+    ROCKY_DB: {}
+  });
+  const ready = healthState({
+    OPENAI_API_KEY: "configured",
+    ROCKY_AI_ENABLED: "true",
+    TURNSTILE_SITE_KEY: "configured",
+    TURNSTILE_SECRET_KEY: "configured",
+    ROCKY_PAYMENTS_ENABLED: "true",
+    PADDLE_CLIENT_TOKEN: "test_public",
+    PADDLE_MONTHLY_PRICE_ID: "pri_month",
+    PADDLE_ANNUAL_PRICE_ID: "pri_year",
+    PADDLE_WEBHOOK_SECRET: "secret",
+    ROCKY_DB: {}
+  });
+
+  assert.equal(degraded.status, 503);
+  assert.equal(degraded.body.paymentsReady, false);
+  assert.equal(ready.status, 200);
+  assert.equal(ready.body.paymentsReady, true);
+});
+
 test("homepage declares the www production URL as canonical", async () => {
   const html = await readFile(
     new URL("../WEBSITE/index.html", import.meta.url),
