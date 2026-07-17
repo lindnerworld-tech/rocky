@@ -20,8 +20,20 @@ export function healthState(env) {
   const identityReady = !identityEnabled || Boolean(
     env.CLERK_PUBLISHABLE_KEY && env.CLERK_JWT_KEY && env.ROCKY_DB
   );
+  const paymentsEnabled = env.ROCKY_PAYMENTS_ENABLED === "true";
+  const paymentsReady = !paymentsEnabled || Boolean(
+    env.PADDLE_CLIENT_TOKEN &&
+    env.PADDLE_MONTHLY_PRICE_ID &&
+    env.PADDLE_ANNUAL_PRICE_ID &&
+    env.PADDLE_WEBHOOK_SECRET &&
+    env.ROCKY_DB
+  );
   const ready = Boolean(
-    protectedByTurnstile && aiEnabled && env.OPENAI_API_KEY && identityReady
+    protectedByTurnstile &&
+    aiEnabled &&
+    env.OPENAI_API_KEY &&
+    identityReady &&
+    paymentsReady
   );
 
   return {
@@ -32,7 +44,9 @@ export function healthState(env) {
       protected: protectedByTurnstile,
       aiEnabled,
       identityEnabled,
-      identityReady
+      identityReady,
+      paymentsEnabled,
+      paymentsReady
     }
   };
 }
