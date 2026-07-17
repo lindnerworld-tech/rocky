@@ -8,8 +8,18 @@
     "ROCKY_AI_ENABLED": "true",
     "ROCKY_DAILY_IP_LIMIT": "1",
     "ROCKY_GLOBAL_DAILY_LIMIT": "500",
-    "ROCKY_IDENTITY_ENABLED": "false"
+    "ROCKY_IDENTITY_ENABLED": "false",
+    "CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsucm9ja3lhbG9oYS5jb20k",
+    "CLERK_JWT_KEY": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAy9TVWR/oaK02cEoXA34O\nT0PqV+ahd/A8ozwT9Uz6epYCQL+NKkW+TjqIxyZisUG/9YvXg0nuy1GAJe2Hpo02\n0GB5f2dYDjNKSO3CUkJ4wA0u8TV3tjfgzhC+1qgtzMqwCfUTba7bJmbLu3tculO3\naikjpm6PRa77QdQYwjSYRZXFBdnm+2rxQTqqe/9a99U2E7qqu+xv4jBBq79q/UaA\nXeijvInJAzLSsR/QTDBbosepaPo4flSuce9DE3GCOp89UbJ6gidT6pVz5z240pGu\nWTw6pVXv15toLDVluqUhv0kvQTJmd808b50+rPu/ZqlAAjrcIWcU/h0UksBOirJt\n/QIDAQAB\n-----END PUBLIC KEY-----"
   },
+  "d1_databases": [
+    {
+      "binding": "ROCKY_DB",
+      "database_name": "rocky-identity-production",
+      "database_id": "f9fe9f1a-de65-409b-9445-46a0458c80b1",
+      "migrations_dir": "migrations"
+    }
+  ],
   "observability": {
     "enabled": true
   },
