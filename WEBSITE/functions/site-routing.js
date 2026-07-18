@@ -1,9 +1,16 @@
+import { voiceEnabledForEnvironment } from "./rocky-voice.js";
+
 export const CANONICAL_HOSTNAME = "www.rockyaloha.com";
 export const APEX_HOSTNAME = "rockyaloha.com";
+const CANONICAL_ALIASES = new Set([
+  APEX_HOSTNAME,
+  "rockyaloha.org",
+  "www.rockyaloha.org"
+]);
 
 export function canonicalRedirectFor(url) {
   const target = url instanceof URL ? new URL(url) : new URL(url);
-  if (target.hostname !== APEX_HOSTNAME) return null;
+  if (!CANONICAL_ALIASES.has(target.hostname)) return null;
 
   target.protocol = "https:";
   target.hostname = CANONICAL_HOSTNAME;
@@ -16,12 +23,17 @@ export function healthState(env) {
     env.TURNSTILE_SITE_KEY && env.TURNSTILE_SECRET_KEY
   );
   const aiEnabled = env.ROCKY_AI_ENABLED !== "false";
+  const voiceEnabled = voiceEnabledForEnvironment(env);
+  const voiceReady = !voiceEnabled || Boolean(env.OPENAI_API_KEY);
   const identityEnabled = env.ROCKY_IDENTITY_ENABLED === "true";
   const identityReady = !identityEnabled || Boolean(
     env.CLERK_PUBLISHABLE_KEY && env.CLERK_JWT_KEY && env.ROCKY_DB
   );
   const paymentsEnabled = env.ROCKY_PAYMENTS_ENABLED === "true";
+  const liveSourceAllowlistReady = env.PADDLE_ENVIRONMENT === "sandbox" ||
+    Boolean(env.PADDLE_API_KEY);
   const paymentsReady = !paymentsEnabled || Boolean(
+    liveSourceAllowlistReady &&
     env.PADDLE_CLIENT_TOKEN &&
     env.PADDLE_MONTHLY_PRICE_ID &&
     env.PADDLE_ANNUAL_PRICE_ID &&
@@ -33,6 +45,7 @@ export function healthState(env) {
     protectedByTurnstile &&
     aiEnabled &&
     env.OPENAI_API_KEY &&
+    voiceReady &&
     identityReady &&
     paymentsReady
   );
@@ -44,6 +57,8 @@ export function healthState(env) {
       service: "project-rocky",
       protected: protectedByTurnstile,
       aiEnabled,
+      voiceEnabled,
+      voiceReady,
       identityEnabled,
       identityReady,
       paymentsEnabled,

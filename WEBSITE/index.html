@@ -7,7 +7,25 @@
   <meta name="theme-color" content="#102b39">
   <title>ROCKY | Ancient Wisdom. Island Humor.</title>
   <link rel="canonical" href="https://www.rockyaloha.com/">
-  <link rel="preload" href="rocky-hero.png" as="image">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Project Rocky">
+  <meta property="og:title" content="When life gets noisy, ask a rock.">
+  <meta property="og:description" content="Ancient wisdom, island humor, and daily perspective from Rocky, the 4-billion-year-old AI pet rock.">
+  <meta property="og:url" content="https://www.rockyaloha.com/">
+  <meta property="og:image" content="https://www.rockyaloha.com/rocky-social-card.jpg">
+  <meta property="og:image:secure_url" content="https://www.rockyaloha.com/rocky-social-card.jpg">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Rocky on a Hawaiian black-sand beach beside the words: When life gets noisy, ask a rock.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="When life gets noisy, ask a rock.">
+  <meta name="twitter:description" content="Ancient wisdom, island humor, and daily perspective from Rocky, the 4-billion-year-old AI pet rock.">
+  <meta name="twitter:image" content="https://www.rockyaloha.com/rocky-social-card.jpg">
+  <meta name="twitter:image:alt" content="Rocky on a Hawaiian black-sand beach beside the words: When life gets noisy, ask a rock.">
+  <link rel="preload" href="rocky-hero-background.jpg" as="image">
+  <link rel="preload" href="rocky-character.webp" as="image">
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" defer></script>
   <style>
     :root {
@@ -116,23 +134,110 @@
       align-items: center;
       overflow: hidden;
       color: var(--white);
-      background: #162d38 url("rocky-hero.png") 64% center / cover no-repeat;
+      background: #162d38 url("rocky-hero-background.jpg") 64% center / cover no-repeat;
     }
 
     .hero::before {
       content: "";
       position: absolute;
       inset: 0;
-      z-index: -1;
+      z-index: 2;
+      pointer-events: none;
       background:
         linear-gradient(90deg, rgba(6,25,34,.93) 0%, rgba(8,28,38,.76) 36%, rgba(8,28,38,.18) 62%, rgba(8,28,38,.08) 100%),
         linear-gradient(0deg, rgba(8,25,33,.5) 0%, transparent 30%);
     }
 
     .hero-inner {
+      position: relative;
+      z-index: 3;
       width: min(1180px, calc(100% - 40px));
       margin: 0 auto;
       padding: 150px 0 100px;
+    }
+
+    .rocky-stage {
+      position: absolute;
+      right: clamp(-45px, 2vw, 36px);
+      bottom: 8%;
+      z-index: 1;
+      width: clamp(460px, 49vw, 650px);
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .rocky-character-motion {
+      position: relative;
+      transform-origin: 52% 92%;
+      animation: rocky-sway 8s ease-in-out infinite;
+      will-change: transform;
+    }
+
+    .rocky-character {
+      display: block;
+      width: 100%;
+      height: auto;
+      filter: drop-shadow(0 24px 18px rgba(4, 12, 16, .34));
+    }
+
+    .rocky-eyelid {
+      position: absolute;
+      top: 29.5%;
+      height: 9.5%;
+      border-radius: 48% 48% 54% 54%;
+      opacity: 0;
+      transform: scaleY(.04);
+      transform-origin: 50% 0;
+      animation-duration: 7.8s;
+      animation-timing-function: ease-in-out;
+      animation-iteration-count: infinite;
+      background: linear-gradient(165deg, #35383a 0%, #20272b 46%, #10171b 100%);
+      box-shadow:
+        inset 0 -3px 2px rgba(5, 10, 12, .65),
+        inset 5px 1px 8px rgba(221, 128, 73, .12);
+      will-change: transform, opacity;
+    }
+
+    .rocky-eyelid-left {
+      left: 16.1%;
+      width: 16.5%;
+      transform: rotate(-3deg) scaleY(.04);
+    }
+
+    .rocky-eyelid-right {
+      left: 44%;
+      width: 17.2%;
+      transform: rotate(2deg) scaleY(.04);
+    }
+
+    @keyframes rocky-sway {
+      0%, 100% { transform: translate3d(0, 0, 0) rotate(-.35deg); }
+      50% { transform: translate3d(0, -3px, 0) rotate(.35deg); }
+    }
+
+    .rocky-eyelid-left { animation-name: rocky-blink-left; }
+    .rocky-eyelid-right { animation-name: rocky-blink-right; }
+
+    @keyframes rocky-blink-left {
+      0%, 89%, 96%, 100% {
+        opacity: 0;
+        transform: rotate(-3deg) scaleY(.04);
+      }
+      91.5%, 93.5% {
+        opacity: 1;
+        transform: rotate(-3deg) scaleY(1);
+      }
+    }
+
+    @keyframes rocky-blink-right {
+      0%, 89%, 96%, 100% {
+        opacity: 0;
+        transform: rotate(2deg) scaleY(.04);
+      }
+      91.5%, 93.5% {
+        opacity: 1;
+        transform: rotate(2deg) scaleY(1);
+      }
     }
 
     .hero-copy { max-width: 640px; }
@@ -503,6 +608,43 @@
       font-style: italic;
     }
 
+    .voice-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 12px;
+      margin-top: 15px;
+    }
+
+    .voice-controls[hidden] { display: none; }
+
+    .voice-button {
+      min-height: 40px;
+      padding: 8px 14px;
+      border: 1px solid rgba(115,212,209,.55);
+      border-radius: 999px;
+      color: var(--white);
+      background: rgba(8,31,40,.62);
+      font: inherit;
+      font-size: .86rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .voice-button:hover:not(:disabled),
+    .voice-button:focus-visible {
+      border-color: var(--turquoise);
+      background: rgba(89,196,196,.18);
+    }
+
+    .voice-button:disabled { cursor: wait; opacity: .7; }
+
+    .voice-disclosure,
+    .voice-status {
+      color: rgba(255,255,255,.62);
+      font-size: .74rem;
+    }
+
     .footer {
       padding: 42px 20px;
       color: rgba(255,255,255,.65);
@@ -548,6 +690,11 @@
 
       .hero-inner { padding: 160px 0 86px; }
       .hero-copy { max-width: 680px; }
+      .rocky-stage {
+        right: -8%;
+        bottom: 10%;
+        width: min(68vw, 580px);
+      }
       .principles { grid-template-columns: 1fr; }
       .principle { min-height: auto; }
       .ask-grid { grid-template-columns: 1fr; gap: 34px; }
@@ -558,6 +705,11 @@
       .nav-actions { gap: 7px; }
       .nav-link { padding: 7px 11px; font-size: .8rem; }
       .hero { min-height: 720px; background-position: 71% center; }
+      .rocky-stage {
+        right: -20%;
+        bottom: 20%;
+        width: min(105vw, 460px);
+      }
       .hero-inner, .section { width: min(100% - 28px, 1180px); }
       h1 { font-size: clamp(3.4rem, 18vw, 5.2rem); }
       .hero-tagline { font-size: 1.12rem; }
@@ -570,6 +722,10 @@
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
       *, *::before, *::after { transition: none !important; }
+      .rocky-character-motion,
+      .rocky-eyelid { animation: none !important; }
+      .rocky-character-motion { transform: none; }
+      .rocky-eyelid { opacity: 0; }
     }
   </style>
 </head>
@@ -587,6 +743,13 @@
   </nav>
 
   <header class="hero" id="top">
+    <div class="rocky-stage" aria-hidden="true">
+      <div class="rocky-character-motion">
+        <img class="rocky-character" src="rocky-character.webp" alt="" width="1012" height="741" draggable="false">
+        <span class="rocky-eyelid rocky-eyelid-left"></span>
+        <span class="rocky-eyelid rocky-eyelid-right"></span>
+      </div>
+    </div>
     <div class="hero-inner">
       <div class="hero-copy">
         <p class="eyebrow"><span class="eyebrow-dot"></span> Four billion years of perspective</p>
@@ -674,6 +837,12 @@
           <div class="answer" id="answerBox" aria-live="polite">
             <p class="answer-label">Rocky says</p>
             <p class="answer-text" id="rockyAnswer">The rock is listening.</p>
+            <div class="voice-controls" id="rockyVoiceControls" hidden>
+              <button class="voice-button" id="hearRockyButton" type="button" aria-pressed="false" aria-describedby="rockyVoiceDisclosure">Hear Rocky</button>
+              <span class="voice-disclosure" id="rockyVoiceDisclosure">AI-generated voice.</span>
+              <span class="voice-status" id="rockyVoiceStatus" aria-live="polite"></span>
+              <audio id="rockyAudio" preload="none" hidden></audio>
+            </div>
           </div>
         </div>
       </div>
@@ -712,10 +881,16 @@
     let turnstileToken = "";
     let turnstileWidgetId = null;
     let rockyConfigPromise = null;
+    let rockyVoiceEnabled = false;
+    let latestRockyAnswer = "";
+    let latestSpeechTicket = "";
+    let rockyAudioUrl = "";
     let identityReady = false;
     let userButtonMounted = false;
     let paymentsReady = false;
+    let paymentsInitializing = false;
     let paddleConfig = null;
+    let paddleRetainCustomerId = null;
     let checkoutCompleted = false;
 
     function loadRockyConfig() {
@@ -731,6 +906,107 @@
       }
 
       return rockyConfigPromise;
+    }
+
+    function resetRockyVoice() {
+      const controls = document.getElementById("rockyVoiceControls");
+      const button = document.getElementById("hearRockyButton");
+      const status = document.getElementById("rockyVoiceStatus");
+      const audio = document.getElementById("rockyAudio");
+
+      audio.pause();
+      audio.removeAttribute("src");
+      audio.load();
+      if (rockyAudioUrl) URL.revokeObjectURL(rockyAudioUrl);
+
+      rockyAudioUrl = "";
+      latestRockyAnswer = "";
+      latestSpeechTicket = "";
+      controls.hidden = true;
+      button.disabled = false;
+      button.textContent = "Hear Rocky";
+      button.setAttribute("aria-pressed", "false");
+      status.textContent = "";
+    }
+
+    function prepareRockyVoice(answer, speechTicket) {
+      resetRockyVoice();
+      if (!rockyVoiceEnabled || !answer || !speechTicket) return;
+
+      latestRockyAnswer = answer;
+      latestSpeechTicket = speechTicket;
+      document.getElementById("rockyVoiceControls").hidden = false;
+    }
+
+    async function hearRocky() {
+      const button = document.getElementById("hearRockyButton");
+      const status = document.getElementById("rockyVoiceStatus");
+      const audio = document.getElementById("rockyAudio");
+
+      if (!audio.paused && !audio.ended) {
+        audio.pause();
+        button.textContent = "Hear Rocky";
+        button.setAttribute("aria-pressed", "false");
+        status.textContent = "Rocky paused.";
+        return;
+      }
+
+      if (!latestRockyAnswer || !latestSpeechTicket) return;
+
+      if (!rockyAudioUrl) {
+        button.disabled = true;
+        button.textContent = "Finding Rocky's voice...";
+        status.textContent = "";
+
+        try {
+          const response = await fetch("/speak-rocky", {
+            method: "POST",
+            headers: {
+              "Accept": "audio/mpeg",
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              answer: latestRockyAnswer,
+              speechTicket: latestSpeechTicket
+            })
+          });
+
+          if (!response.ok) {
+            let error = {};
+            try { error = await response.json(); } catch {}
+            if (error.error === "invalid_or_expired_speech_ticket") {
+              throw new Error("expired");
+            }
+            throw new Error("unavailable");
+          }
+
+          const audioBlob = await response.blob();
+          if (!audioBlob.size) throw new Error("unavailable");
+          rockyAudioUrl = URL.createObjectURL(audioBlob);
+          audio.src = rockyAudioUrl;
+        } catch (error) {
+          button.disabled = false;
+          button.textContent = "Hear Rocky";
+          button.setAttribute("aria-pressed", "false");
+          status.textContent = error.message === "expired"
+            ? "Voice expired. Ask Rocky again for a fresh answer."
+            : "Rocky's voice is quiet right now. Try again shortly.";
+          return;
+        }
+      }
+
+      button.disabled = false;
+      try {
+        audio.currentTime = 0;
+        await audio.play();
+        button.textContent = "Pause Rocky";
+        button.setAttribute("aria-pressed", "true");
+        status.textContent = "Rocky is speaking.";
+      } catch {
+        button.textContent = "Hear Rocky";
+        button.setAttribute("aria-pressed", "false");
+        status.textContent = "Voice ready—tap Hear Rocky once more.";
+      }
     }
 
     function loadScript(src, attributes = {}) {
@@ -817,6 +1093,43 @@
       document.getElementById("monthlyCheckoutButton").disabled = disabled;
     }
 
+    function paddleCustomerIdFor(access) {
+      const customerId = String(access?.paddleCustomerId || "");
+      return /^ctm_[A-Za-z0-9]+$/.test(customerId) ? customerId : "";
+    }
+
+    function handlePaddleEvent(event) {
+      if (event?.name === "checkout.completed") {
+        checkoutCompleted = true;
+        refreshAfterCheckout();
+      }
+      if (event?.name === "checkout.closed" && !checkoutCompleted) {
+        setCheckoutButtonsDisabled(false);
+      }
+    }
+
+    function updatePaddleRetainCustomer(access) {
+      if (
+        paddleConfig?.environment !== "production" ||
+        !window.Paddle?.Initialized ||
+        typeof window.Paddle.Update !== "function"
+      ) {
+        return;
+      }
+
+      const paddleCustomerId = paddleCustomerIdFor(access);
+      if (paddleRetainCustomerId === paddleCustomerId) return;
+
+      try {
+        window.Paddle.Update({
+          pwCustomer: paddleCustomerId ? { id: paddleCustomerId } : {}
+        });
+        paddleRetainCustomerId = paddleCustomerId;
+      } catch {
+        // Keep the previous ID so the next identity event retries the update.
+      }
+    }
+
     async function openPlusCheckout(interval) {
       const status = document.getElementById("plusStatus");
       if (!paymentsReady || !paddleConfig || !window.Paddle) {
@@ -875,32 +1188,50 @@
     }
 
     async function initializePayments() {
+      if (paymentsInitializing || !window.Clerk?.isSignedIn) return;
+      paymentsInitializing = true;
+
       try {
         const config = await loadRockyConfig();
         if (!config.payments?.enabled || !config.payments.ready) return;
 
         paddleConfig = config.payments;
-        await loadScript("https://cdn.paddle.com/paddle/v2/paddle.js");
-        if (paddleConfig.environment === "sandbox") {
-          window.Paddle.Environment.set("sandbox");
+        const access = await refreshIdentityAccess();
+        if (!access?.authenticated) return;
+        const paddleCustomerId = paddleCustomerIdFor(access);
+
+        if (!window.Paddle) {
+          await loadScript("https://cdn.paddle.com/paddle/v2/paddle.js");
         }
-        window.Paddle.Initialize({
-          token: paddleConfig.clientToken,
-          eventCallback(event) {
-            if (event?.name === "checkout.completed") {
-              checkoutCompleted = true;
-              refreshAfterCheckout();
-            }
-            if (event?.name === "checkout.closed" && !checkoutCompleted) {
-              setCheckoutButtonsDisabled(false);
-            }
+        if (!window.Paddle.Initialized) {
+          if (paddleConfig.environment === "sandbox") {
+            window.Paddle.Environment.set("sandbox");
           }
-        });
+          window.Paddle.Initialize({
+            token: paddleConfig.clientToken,
+            ...(paddleConfig.environment === "production"
+              ? {
+                  pwCustomer: paddleCustomerId
+                    ? { id: paddleCustomerId }
+                    : {}
+                }
+              : {}),
+            eventCallback: handlePaddleEvent
+          });
+          if (paddleConfig.environment === "production") {
+            paddleRetainCustomerId = paddleCustomerId;
+          }
+        } else {
+          window.Paddle.Update({ eventCallback: handlePaddleEvent });
+          updatePaddleRetainCustomer(access);
+        }
 
         paymentsReady = true;
-        await refreshIdentityAccess();
+        showAccess(access);
       } catch {
         paymentsReady = false;
+      } finally {
+        paymentsInitializing = false;
       }
     }
 
@@ -915,7 +1246,9 @@
           window.Clerk.mountUserButton(userButton);
           userButtonMounted = true;
         }
+        await initializePayments();
       } else {
+        updatePaddleRetainCustomer(null);
         if (userButtonMounted) {
           window.Clerk.unmountUserButton(userButton);
           userButtonMounted = false;
@@ -974,6 +1307,9 @@
 
       try {
         const config = await loadRockyConfig();
+        rockyVoiceEnabled = Boolean(
+          config.voice?.enabled && config.voice?.ready
+        );
 
         if (!config.protected || !config.turnstileSiteKey) {
           throw new Error("Protection is not configured");
@@ -1038,6 +1374,7 @@
       button.disabled = true;
       button.textContent = "Rocky is thinking...";
       answerField.textContent = "The tide is turning. Give Rocky a moment.";
+      resetRockyVoice();
 
       try {
         const token = await sessionToken();
@@ -1060,6 +1397,8 @@
 
         if (!response.ok) return;
 
+        prepareRockyVoice(data.answer, data.speechTicket);
+
         const nextCounter = Number(localStorage.getItem("rockyCounter") || 0) + 1;
         localStorage.setItem("rockyCounter", String(nextCounter));
         const deviceCounter = document.getElementById("rockyCounter");
@@ -1079,9 +1418,15 @@
     window.addEventListener("load", () => {
       initializeTurnstile();
       initializeIdentity();
-      initializePayments();
     });
     document.getElementById("askButton").addEventListener("click", askRocky);
+    document.getElementById("hearRockyButton").addEventListener("click", hearRocky);
+    document.getElementById("rockyAudio").addEventListener("ended", () => {
+      const button = document.getElementById("hearRockyButton");
+      button.textContent = "Hear Rocky again";
+      button.setAttribute("aria-pressed", "false");
+      document.getElementById("rockyVoiceStatus").textContent = "";
+    });
     document.getElementById("annualCheckoutButton").addEventListener("click", () => openPlusCheckout("annual"));
     document.getElementById("monthlyCheckoutButton").addEventListener("click", () => openPlusCheckout("monthly"));
     document.getElementById("rockyQuestion").addEventListener("keydown", event => {

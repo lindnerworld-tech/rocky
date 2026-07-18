@@ -1,13 +1,17 @@
 import { DurableObject } from "cloudflare:workers";
 import { onRequestPost } from "./WEBSITE/functions/ask-rocky.js";
 import {
+  onRequestSpeakRocky,
+  publicVoiceConfiguration
+} from "./WEBSITE/functions/rocky-voice.js";
+import {
   identityConfiguration,
   identityStatus
 } from "./WEBSITE/functions/identity.js";
 import {
   checkoutContext,
   handlePaddleWebhook,
-  paymentsConfiguration
+  publicPaymentsConfiguration
 } from "./WEBSITE/functions/payments.js";
 import {
   canonicalRedirectFor,
@@ -145,8 +149,9 @@ export default {
         protected: Boolean(
           env.TURNSTILE_SITE_KEY && env.TURNSTILE_SECRET_KEY
         ),
+        voice: publicVoiceConfiguration(env),
         identity: identityConfiguration(env),
-        payments: paymentsConfiguration(env)
+        payments: publicPaymentsConfiguration(env, url.hostname)
       });
     }
 
@@ -191,6 +196,18 @@ export default {
       }
 
       return onRequestPost({ request, env });
+    }
+
+    if (url.pathname === "/speak-rocky") {
+      if (request.method !== "POST") {
+        return jsonResponse(
+          { error: "method_not_allowed" },
+          405,
+          { Allow: "POST" }
+        );
+      }
+
+      return onRequestSpeakRocky({ request, env });
     }
 
     return env.ASSETS.fetch(request);

@@ -2,6 +2,7 @@ import { verifyToken } from "@clerk/backend";
 
 export const FREE_DAILY_LIMIT = 1;
 export const PLUS_DAILY_LIMIT = 20;
+export const SANDBOX_FREE_DAILY_LIMIT = 20;
 
 const ACTIVE_PLUS_STATUSES = new Set(["active", "trialing"]);
 
@@ -85,6 +86,18 @@ export function accessPlanFor(entitlement, now = new Date()) {
   return { plan: "plus", dailyLimit: PLUS_DAILY_LIMIT };
 }
 
+export function accessPlanForEnvironment(env, entitlement, now = new Date()) {
+  const access = accessPlanFor(entitlement, now);
+  if (
+    access.plan === "free" &&
+    env.PADDLE_ENVIRONMENT === "sandbox"
+  ) {
+    return { ...access, dailyLimit: SANDBOX_FREE_DAILY_LIMIT };
+  }
+
+  return access;
+}
+
 async function ensureAccount(db, userId, nowIso) {
   await db.batch([
     db.prepare(
@@ -101,10 +114,15 @@ async function ensureAccount(db, userId, nowIso) {
 
 async function entitlementFor(db, userId) {
   return db.prepare(
-    `SELECT plan, status, source, current_period_end
+    `SELECT plan, status, source, current_period_end, paddle_customer_id
      FROM entitlements
      WHERE user_id = ?`
   ).bind(userId).first();
+}
+
+function paddleCustomerIdFor(entitlement) {
+  const customerId = String(entitlement?.paddle_customer_id || "");
+  return /^ctm_[A-Za-z0-9]+$/.test(customerId) ? customerId : "";
 }
 
 async function usedToday(db, userId, utcDay) {
@@ -125,12 +143,13 @@ export async function getIdentityAccess(env, userId, now = new Date()) {
   await ensureAccount(env.ROCKY_DB, userId, nowIso);
 
   const entitlement = await entitlementFor(env.ROCKY_DB, userId);
-  const access = accessPlanFor(entitlement, now);
+  const access = accessPlanForEnvironment(env, entitlement, now);
   const used = await usedToday(env.ROCKY_DB, userId, utcDay);
 
   return {
     authenticated: true,
     ...access,
+    paddleCustomerId: paddleCustomerIdFor(entitlement),
     used,
     remaining: Math.max(0, access.dailyLimit - used)
   };
@@ -144,7 +163,7 @@ export async function consumeIdentityAllowance(env, userId, now = new Date()) {
   await ensureAccount(env.ROCKY_DB, userId, nowIso);
 
   const entitlement = await entitlementFor(env.ROCKY_DB, userId);
-  const access = accessPlanFor(entitlement, now);
+  const access = accessPlanForEnvironment(env, entitlement, now);
   const row = await env.ROCKY_DB.prepare(
     `INSERT INTO usage_daily (user_id, usage_date, answer_count, updated_at)
      VALUES (?, ?, 1, ?)

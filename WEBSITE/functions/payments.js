@@ -5,6 +5,8 @@ import {
 
 const MAX_WEBHOOK_BYTES = 1024 * 1024;
 const SIGNATURE_TOLERANCE_SECONDS = 300;
+const PADDLE_IP_CACHE_MS = 60 * 60 * 1000;
+const LIVE_CHECKOUT_HOSTNAME = "www.rockyaloha.com";
 const PADDLE_SUBSCRIPTION_EVENTS = new Set([
   "subscription.activated",
   "subscription.canceled",
@@ -17,6 +19,7 @@ const PADDLE_SUBSCRIPTION_EVENTS = new Set([
 ]);
 
 const textEncoder = new TextEncoder();
+let paddleIpCache = { baseUrl: "", cidrs: [], expiresAt: 0 };
 
 function bytesToHex(bytes) {
   return Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
@@ -68,8 +71,13 @@ function parsedPaddleSignature(header) {
 
 export function paymentsConfiguration(env) {
   const enabled = env.ROCKY_PAYMENTS_ENABLED === "true";
+  const environment = env.PADDLE_ENVIRONMENT === "sandbox"
+    ? "sandbox"
+    : "production";
+  const sourceAllowlistReady = environment === "sandbox" || Boolean(env.PADDLE_API_KEY);
   const ready = Boolean(
     enabled &&
+    sourceAllowlistReady &&
     env.PADDLE_CLIENT_TOKEN &&
     env.PADDLE_MONTHLY_PRICE_ID &&
     env.PADDLE_ANNUAL_PRICE_ID &&
@@ -81,13 +89,87 @@ export function paymentsConfiguration(env) {
   return {
     enabled,
     ready,
-    environment: ready && env.PADDLE_ENVIRONMENT === "sandbox"
-      ? "sandbox"
-      : "production",
+    environment,
     clientToken: ready ? env.PADDLE_CLIENT_TOKEN : "",
     monthlyPriceId: ready ? env.PADDLE_MONTHLY_PRICE_ID : "",
     annualPriceId: ready ? env.PADDLE_ANNUAL_PRICE_ID : ""
   };
+}
+
+export function publicPaymentsConfiguration(env, hostname) {
+  const config = paymentsConfiguration(env);
+  if (
+    config.environment !== "production" ||
+    hostname === LIVE_CHECKOUT_HOSTNAME
+  ) {
+    return config;
+  }
+
+  return {
+    ...config,
+    ready: false,
+    clientToken: "",
+    monthlyPriceId: "",
+    annualPriceId: ""
+  };
+}
+
+function validPaddleIpv4Cidr(value) {
+  const match = String(value || "").match(
+    /^(25[0-5]|2[0-4]\d|1?\d?\d)\.(25[0-5]|2[0-4]\d|1?\d?\d)\.(25[0-5]|2[0-4]\d|1?\d?\d)\.(25[0-5]|2[0-4]\d|1?\d?\d)\/32$/
+  );
+  return match ? match[0] : "";
+}
+
+async function currentPaddleIpv4Cidrs(env, fetcher = fetch, now = new Date()) {
+  const baseUrl = env.PADDLE_ENVIRONMENT === "sandbox"
+    ? "https://sandbox-api.paddle.com"
+    : "https://api.paddle.com";
+  const nowMs = now.getTime();
+
+  if (
+    paddleIpCache.baseUrl === baseUrl &&
+    paddleIpCache.expiresAt > nowMs &&
+    paddleIpCache.cidrs.length
+  ) {
+    return paddleIpCache.cidrs;
+  }
+
+  const response = await fetcher(`${baseUrl}/ips`, {
+    headers: {
+      "Accept": "application/json",
+      "Authorization": `Bearer ${env.PADDLE_API_KEY}`
+    }
+  });
+  if (!response.ok) throw new Error("Paddle IP allowlist is unavailable");
+
+  const payload = await response.json();
+  const cidrs = Array.isArray(payload?.data?.ipv4_cidrs)
+    ? payload.data.ipv4_cidrs.map(validPaddleIpv4Cidr).filter(Boolean)
+    : [];
+  if (!cidrs.length) throw new Error("Paddle IP allowlist is empty");
+
+  paddleIpCache = {
+    baseUrl,
+    cidrs,
+    expiresAt: nowMs + PADDLE_IP_CACHE_MS
+  };
+  return cidrs;
+}
+
+async function paddleWebhookSourceAllowed(request, env, fetcher, now) {
+  if (env.PADDLE_ENVIRONMENT === "sandbox") return true;
+
+  const sourceIp = String(request.headers.get("CF-Connecting-IP") || "");
+  const sourceCidr = validPaddleIpv4Cidr(`${sourceIp}/32`);
+  if (!sourceCidr) return false;
+
+  try {
+    const cidrs = await currentPaddleIpv4Cidrs(env, fetcher, now);
+    return cidrs.includes(sourceCidr);
+  } catch {
+    return false;
+  }
 }
 
 export async function verifyPaddleSignature(
@@ -138,6 +220,12 @@ export async function checkoutContext(
   const config = paymentsConfiguration(env);
   if (!config.enabled || !config.ready) {
     return { status: 503, body: { error: "payments_not_configured" } };
+  }
+  if (
+    config.environment === "production" &&
+    new URL(request.url).hostname !== LIVE_CHECKOUT_HOSTNAME
+  ) {
+    return { status: 403, body: { error: "checkout_host_not_allowed" } };
   }
 
   const identity = await resolveIdentity(request, env);
@@ -286,12 +374,20 @@ export async function processPaddleEvent(env, event, now = new Date()) {
   return { duplicate: false, updated: true, userId, status };
 }
 
-export async function handlePaddleWebhook(request, env, now = new Date()) {
+export async function handlePaddleWebhook(
+  request,
+  env,
+  now = new Date(),
+  fetcher = fetch
+) {
   if (request.method !== "POST") {
     return { status: 405, body: { error: "method_not_allowed" }, headers: { Allow: "POST" } };
   }
   if (!paymentsConfiguration(env).ready) {
     return { status: 503, body: { error: "payments_not_configured" } };
+  }
+  if (!await paddleWebhookSourceAllowed(request, env, fetcher, now)) {
+    return { status: 403, body: { error: "webhook_source_not_allowed" } };
   }
 
   const contentLength = Number(request.headers.get("content-length") || 0);

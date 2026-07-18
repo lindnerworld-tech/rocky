@@ -18,6 +18,17 @@ test("redirects the apex domain to canonical www and preserves the request", () 
   );
 });
 
+test("redirects both org aliases to the approved checkout hostname", () => {
+  assert.equal(
+    canonicalRedirectFor("https://rockyaloha.org/pricing"),
+    "https://www.rockyaloha.com/pricing"
+  );
+  assert.equal(
+    canonicalRedirectFor("https://www.rockyaloha.org/terms?from=org"),
+    "https://www.rockyaloha.com/terms?from=org"
+  );
+});
+
 test("does not redirect the canonical or workers.dev hostnames", () => {
   assert.equal(canonicalRedirectFor("https://www.rockyaloha.com/"), null);
   assert.equal(
@@ -26,6 +37,17 @@ test("does not redirect the canonical or workers.dev hostnames", () => {
     ),
     null
   );
+});
+
+test("worker runs before every asset so aliases cannot bypass redirects", async () => {
+  const source = await readFile(
+    new URL("../wrangler.jsonc", import.meta.url),
+    "utf8"
+  );
+  const config = JSON.parse(source.replace(/^\uFEFF/, ""));
+
+  assert.equal(config.assets.run_worker_first, true);
+  assert.equal(config.env.staging.assets.run_worker_first, true);
 });
 
 test("health is ready only when AI and Turnstile are configured", () => {
@@ -44,8 +66,23 @@ test("health is ready only when AI and Turnstile are configured", () => {
 
   assert.equal(ready.status, 200);
   assert.equal(ready.body.status, "ok");
+  assert.equal(ready.body.voiceEnabled, false);
+  assert.equal(ready.body.voiceReady, true);
   assert.equal(stopped.status, 503);
   assert.equal(stopped.body.status, "degraded");
+});
+
+test("health fails closed when enabled voice is missing its provider key", () => {
+  const degraded = healthState({
+    ROCKY_AI_ENABLED: "true",
+    ROCKY_VOICE_ENABLED: "true",
+    TURNSTILE_SITE_KEY: "configured",
+    TURNSTILE_SECRET_KEY: "configured"
+  });
+
+  assert.equal(degraded.status, 503);
+  assert.equal(degraded.body.voiceEnabled, true);
+  assert.equal(degraded.body.voiceReady, false);
 });
 
 test("health fails closed when enabled payments are incomplete", () => {
@@ -67,6 +104,7 @@ test("health fails closed when enabled payments are incomplete", () => {
     PADDLE_MONTHLY_PRICE_ID: "pri_month",
     PADDLE_ANNUAL_PRICE_ID: "pri_year",
     PADDLE_WEBHOOK_SECRET: "secret",
+    PADDLE_API_KEY: "pdl_live_private",
     ROCKY_CHECKOUT_SECRET: "checkout-secret",
     ROCKY_DB: {}
   });
@@ -87,4 +125,33 @@ test("homepage declares the www production URL as canonical", async () => {
     html,
     /<link rel="canonical" href="https:\/\/www\.rockyaloha\.com\/">/
   );
+});
+
+test("homepage publishes a complete large social preview", async () => {
+  const [html, image] = await Promise.all([
+    readFile(new URL("../WEBSITE/index.html", import.meta.url), "utf8"),
+    readFile(new URL("../WEBSITE/rocky-social-card.jpg", import.meta.url))
+  ]);
+
+  assert.match(html, /<meta property="og:type" content="website">/);
+  assert.match(
+    html,
+    /<meta property="og:title" content="When life gets noisy, ask a rock\.">/
+  );
+  assert.match(
+    html,
+    /<meta property="og:image" content="https:\/\/www\.rockyaloha\.com\/rocky-social-card\.jpg">/
+  );
+  assert.match(html, /<meta property="og:image:width" content="1200">/);
+  assert.match(html, /<meta property="og:image:height" content="630">/);
+  assert.match(
+    html,
+    /<meta name="twitter:card" content="summary_large_image">/
+  );
+  assert.match(
+    html,
+    /<meta name="twitter:image" content="https:\/\/www\.rockyaloha\.com\/rocky-social-card\.jpg">/
+  );
+  assert.deepEqual([...image.subarray(0, 2)], [0xff, 0xd8]);
+  assert.ok(image.byteLength < 1_000_000);
 });

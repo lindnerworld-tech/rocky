@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { onRequestPost } from "../WEBSITE/functions/ask-rocky.js";
+import { verifySpeechTicket } from "../WEBSITE/functions/rocky-voice.js";
 
 function makeRequest(body, headers = {}) {
   return new Request("https://rocky.test/ask-rocky", {
@@ -63,6 +64,7 @@ test("returns a protected Rocky answer", async t => {
   });
 
   const calls = [];
+  let providerBody;
   globalThis.fetch = async (url, options) => {
     calls.push(String(url));
 
@@ -73,6 +75,8 @@ test("returns a protected Rocky answer", async t => {
         action: "ask_rocky"
       });
     }
+
+    providerBody = JSON.parse(options.body);
 
     return Response.json({
       output: [
@@ -94,11 +98,29 @@ test("returns a protected Rocky answer", async t => {
       category: "life",
       turnstileToken: "valid-token"
     }),
-    env: makeEnv()
+    env: makeEnv({ ROCKY_VOICE_ENABLED: "true" })
   }));
 
   assert.equal(result.status, 200);
   assert.match(result.body.answer, /wave/i);
+  assert.match(result.body.speechTicket, /^v1\./);
+  const remoteIpDigest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode("203.0.113.10")
+  );
+  const ipKey = [...new Uint8Array(remoteIpDigest)]
+    .slice(0, 16)
+    .map(byte => byte.toString(16).padStart(2, "0"))
+    .join("");
+  assert.equal(await verifySpeechTicket(
+    result.body.speechTicket,
+    result.body.answer,
+    ipKey,
+    "test-openai-key",
+    "rocky.test"
+  ), true);
+  assert.match(providerBody.input, /speak with earned certainty/i);
+  assert.match(providerBody.input, /never confuse authority with infallibility/i);
   assert.equal(calls.length, 2);
 });
 
