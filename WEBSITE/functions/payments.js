@@ -1,4 +1,7 @@
-import { authenticateRequestIdentity } from "./identity.js";
+import {
+  authenticateRequestIdentity,
+  getIdentityAccess
+} from "./identity.js";
 
 const MAX_WEBHOOK_BYTES = 1024 * 1024;
 const SIGNATURE_TOLERANCE_SECONDS = 300;
@@ -71,6 +74,7 @@ export function paymentsConfiguration(env) {
     env.PADDLE_MONTHLY_PRICE_ID &&
     env.PADDLE_ANNUAL_PRICE_ID &&
     env.PADDLE_WEBHOOK_SECRET &&
+    env.ROCKY_CHECKOUT_SECRET &&
     env.ROCKY_DB
   );
 
@@ -128,7 +132,8 @@ export async function verifyCheckoutContext(customData, secret) {
 export async function checkoutContext(
   request,
   env,
-  resolveIdentity = authenticateRequestIdentity
+  resolveIdentity = authenticateRequestIdentity,
+  resolveAccess = getIdentityAccess
 ) {
   const config = paymentsConfiguration(env);
   if (!config.enabled || !config.ready) {
@@ -140,9 +145,18 @@ export async function checkoutContext(
     return { status: 401, body: { error: "sign_in_required" } };
   }
 
+  try {
+    const access = await resolveAccess(env, identity.userId);
+    if (access.plan === "plus") {
+      return { status: 409, body: { error: "already_plus" } };
+    }
+  } catch {
+    return { status: 503, body: { error: "identity_store_unavailable" } };
+  }
+
   return {
     status: 200,
-    body: await createCheckoutContext(identity.userId, env.PADDLE_WEBHOOK_SECRET)
+    body: await createCheckoutContext(identity.userId, env.ROCKY_CHECKOUT_SECRET)
   };
 }
 
@@ -160,6 +174,16 @@ async function markEventProcessed(db, eventId, userId, processedAt) {
      SET user_id = ?, processed_at = ?
      WHERE event_id = ?`
   ).bind(userId || null, processedAt, eventId).run();
+}
+
+async function userIdForSubscription(db, subscriptionId) {
+  if (!subscriptionId) return "";
+  const row = await db.prepare(
+    `SELECT user_id
+     FROM entitlements
+     WHERE paddle_subscription_id = ?`
+  ).bind(subscriptionId).first();
+  return String(row?.user_id || "");
 }
 
 export async function processPaddleEvent(env, event, now = new Date()) {
@@ -189,10 +213,14 @@ export async function processPaddleEvent(env, event, now = new Date()) {
     return { duplicate: false, updated: false };
   }
 
-  const userId = await verifyCheckoutContext(
-    event.data?.custom_data,
-    env.PADDLE_WEBHOOK_SECRET
-  );
+  const subscriptionId = String(event.data?.id || "");
+  let userId = await userIdForSubscription(env.ROCKY_DB, subscriptionId);
+  if (!userId) {
+    userId = await verifyCheckoutContext(
+      event.data?.custom_data,
+      env.ROCKY_CHECKOUT_SECRET
+    );
+  }
   if (!userId) {
     await markEventProcessed(env.ROCKY_DB, eventId, "", receivedAt);
     return { duplicate: false, updated: false };
@@ -213,7 +241,6 @@ export async function processPaddleEvent(env, event, now = new Date()) {
 
   const status = mappedEntitlementStatus(event.data?.status);
   const currentPeriodEnd = event.data?.current_billing_period?.ends_at || null;
-  const subscriptionId = String(event.data?.id || "");
   const customerId = String(event.data?.customer_id || "");
 
   await env.ROCKY_DB.batch([

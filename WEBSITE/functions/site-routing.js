@@ -26,6 +26,7 @@ export function healthState(env) {
     env.PADDLE_MONTHLY_PRICE_ID &&
     env.PADDLE_ANNUAL_PRICE_ID &&
     env.PADDLE_WEBHOOK_SECRET &&
+    env.ROCKY_CHECKOUT_SECRET &&
     env.ROCKY_DB
   );
   const ready = Boolean(

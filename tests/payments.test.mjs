@@ -27,6 +27,14 @@ class FakeStatement {
       const event = this.db.events.get(this.params[0]);
       return event ? { processed_at: event.processedAt } : null;
     }
+    if (this.sql.includes("WHERE paddle_subscription_id = ?")) {
+      for (const [userId, entitlement] of this.db.entitlements) {
+        if (entitlement.subscriptionId === this.params[0]) {
+          return { user_id: userId };
+        }
+      }
+      return null;
+    }
     throw new Error(`Unexpected first SQL: ${this.sql}`);
   }
 
@@ -118,7 +126,8 @@ function makeEnv(db = new FakeD1()) {
     PADDLE_CLIENT_TOKEN: "test_public",
     PADDLE_MONTHLY_PRICE_ID: "pri_month",
     PADDLE_ANNUAL_PRICE_ID: "pri_year",
-    PADDLE_WEBHOOK_SECRET: "webhook-secret"
+    PADDLE_WEBHOOK_SECRET: "webhook-secret",
+    ROCKY_CHECKOUT_SECRET: "checkout-secret"
   };
 }
 
@@ -147,7 +156,7 @@ async function subscriptionEvent({
   status = "active",
   occurredAt = "2026-07-17T12:00:00.000Z",
   priceId = "pri_month",
-  secret = "webhook-secret",
+  secret = "checkout-secret",
   userId = "user_rocky"
 } = {}) {
   return {
@@ -178,6 +187,10 @@ test("payments configuration exposes only public checkout values", () => {
     annualPriceId: "pri_year"
   });
   assert.equal("webhookSecret" in config, false);
+
+  const incomplete = makeEnv();
+  delete incomplete.ROCKY_CHECKOUT_SECRET;
+  assert.equal(paymentsConfiguration(incomplete).ready, false);
 });
 
 test("Paddle signature verification rejects changed and stale payloads", async () => {
@@ -211,15 +224,33 @@ test("checkout context requires a signed-in Rocky account", async () => {
   const signedOut = await checkoutContext(request, env, async () => ({
     authenticated: false
   }));
-  const signedIn = await checkoutContext(request, env, async () => ({
-    authenticated: true,
-    userId: "user_rocky"
-  }));
 
   assert.equal(signedOut.status, 401);
-  assert.equal(signedIn.status, 200);
-  assert.equal(signedIn.body.clerk_user_id, "user_rocky");
-  assert.match(signedIn.body.rocky_checkout_signature, /^[a-f0-9]{64}$/);
+
+  const eligible = await checkoutContext(
+    request,
+    env,
+    async () => ({ authenticated: true, userId: "user_rocky" }),
+    async () => ({ plan: "free" })
+  );
+
+  assert.equal(eligible.status, 200);
+  assert.equal(eligible.body.clerk_user_id, "user_rocky");
+  assert.match(eligible.body.rocky_checkout_signature, /^[a-f0-9]{64}$/);
+});
+
+test("checkout context rejects an account that already has Plus", async () => {
+  const env = makeEnv();
+  const request = new Request("https://rocky.test/paddle-checkout-context");
+  const result = await checkoutContext(
+    request,
+    env,
+    async () => ({ authenticated: true, userId: "user_rocky" }),
+    async () => ({ plan: "plus" })
+  );
+
+  assert.equal(result.status, 409);
+  assert.deepEqual(result.body, { error: "already_plus" });
 });
 
 test("verified subscription events grant Plus and are idempotent", async () => {
@@ -243,6 +274,43 @@ test("verified subscription events grant Plus and are idempotent", async () => {
     priceId: "pri_month",
     lastEventAt: "2026-07-17T12:00:00.000Z"
   });
+});
+
+test("stored subscription identity survives webhook and checkout-secret rotation", async () => {
+  const db = new FakeD1();
+  const env = makeEnv(db);
+  const created = await subscriptionEvent();
+  await processPaddleEvent(env, created);
+
+  env.PADDLE_WEBHOOK_SECRET = "rotated-webhook-secret";
+  env.ROCKY_CHECKOUT_SECRET = "rotated-checkout-secret";
+  const now = new Date("2026-07-18T12:00:00.000Z");
+  const canceled = await subscriptionEvent({
+    eventId: "evt_02canceled",
+    eventType: "subscription.canceled",
+    status: "canceled",
+    occurredAt: "2026-07-18T12:00:00.000Z"
+  });
+  canceled.data.current_billing_period = null;
+  const rawBody = JSON.stringify(canceled);
+  const timestamp = Math.floor(now.getTime() / 1000);
+  const signature = await paddleSignature(
+    env.PADDLE_WEBHOOK_SECRET,
+    timestamp,
+    rawBody
+  );
+  const request = new Request("https://rocky.test/paddle-webhook", {
+    method: "POST",
+    headers: { "Paddle-Signature": signature },
+    body: rawBody
+  });
+
+  const response = await handlePaddleWebhook(request, env, now);
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.updated, true);
+  assert.equal(response.body.userId, "user_rocky");
+  assert.equal(db.entitlements.get("user_rocky").status, "canceled");
 });
 
 test("events with an untrusted checkout identity do not grant Plus", async () => {
@@ -284,4 +352,3 @@ test("webhook handler verifies the raw body before updating entitlements", async
   assert.equal(response.body.updated, true);
   assert.equal(db.entitlements.get("user_rocky").plan, "plus");
 });
-

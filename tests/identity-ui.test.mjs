@@ -47,5 +47,9 @@ test("homepage loads Paddle only when public payment configuration is ready", as
   assert.match(html, /Paddle\.Environment\.set\("sandbox"\)/);
   assert.match(html, /Paddle\.Checkout\.open/);
   assert.match(html, /paddle-checkout-context/);
+  assert.match(html, /customData\.error === "already_plus"/);
+  assert.match(html, /setCheckoutButtonsDisabled\(true\)/);
+  assert.match(html, /checkout\.closed" && !checkoutCompleted/);
   assert.doesNotMatch(html, /PADDLE_WEBHOOK_SECRET/);
+  assert.doesNotMatch(html, /ROCKY_CHECKOUT_SECRET/);
 });

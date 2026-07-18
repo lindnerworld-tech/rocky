@@ -404,6 +404,8 @@
       background: linear-gradient(135deg, #ffcf88, var(--sunrise));
     }
 
+    .plus-button:disabled { cursor: wait; opacity: .65; }
+
     .plus-status {
       min-height: 1.3em;
       margin: 11px 0 0;
@@ -691,6 +693,7 @@
     let userButtonMounted = false;
     let paymentsReady = false;
     let paddleConfig = null;
+    let checkoutCompleted = false;
 
     function loadRockyConfig() {
       if (!rockyConfigPromise) {
@@ -786,6 +789,11 @@
       status.textContent = "Payment received. Refresh shortly if Rocky Plus is still syncing.";
     }
 
+    function setCheckoutButtonsDisabled(disabled) {
+      document.getElementById("annualCheckoutButton").disabled = disabled;
+      document.getElementById("monthlyCheckoutButton").disabled = disabled;
+    }
+
     async function openPlusCheckout(interval) {
       const status = document.getElementById("plusStatus");
       if (!paymentsReady || !paddleConfig || !window.Paddle) {
@@ -797,7 +805,10 @@
         return;
       }
 
+      setCheckoutButtonsDisabled(true);
+      checkoutCompleted = false;
       status.textContent = "Opening secure checkout...";
+      let checkoutOpened = false;
       try {
         const token = await sessionToken();
         const response = await fetch("/paddle-checkout-context", {
@@ -808,6 +819,11 @@
           cache: "no-store"
         });
         const customData = await response.json();
+        if (response.status === 409 && customData.error === "already_plus") {
+          await refreshIdentityAccess();
+          status.textContent = "Rocky Plus is already active.";
+          return;
+        }
         if (!response.ok) throw new Error("Checkout context unavailable");
 
         const priceId = interval === "annual"
@@ -826,9 +842,12 @@
             allowLogout: false
           }
         });
+        checkoutOpened = true;
         status.textContent = "";
       } catch {
         status.textContent = "Checkout needs a moment. Please try again.";
+      } finally {
+        if (!checkoutOpened) setCheckoutButtonsDisabled(false);
       }
     }
 
@@ -845,7 +864,13 @@
         window.Paddle.Initialize({
           token: paddleConfig.clientToken,
           eventCallback(event) {
-            if (event?.name === "checkout.completed") refreshAfterCheckout();
+            if (event?.name === "checkout.completed") {
+              checkoutCompleted = true;
+              refreshAfterCheckout();
+            }
+            if (event?.name === "checkout.closed" && !checkoutCompleted) {
+              setCheckoutButtonsDisabled(false);
+            }
           }
         });
 

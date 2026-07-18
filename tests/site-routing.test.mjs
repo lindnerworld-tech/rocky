@@ -67,6 +67,7 @@ test("health fails closed when enabled payments are incomplete", () => {
     PADDLE_MONTHLY_PRICE_ID: "pri_month",
     PADDLE_ANNUAL_PRICE_ID: "pri_year",
     PADDLE_WEBHOOK_SECRET: "secret",
+    ROCKY_CHECKOUT_SECRET: "checkout-secret",
     ROCKY_DB: {}
   });
 
