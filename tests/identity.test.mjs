@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  accessPlanForEnvironment,
   accessPlanFor,
   bearerTokenFrom,
   consumeIdentityAllowance,
@@ -9,7 +10,8 @@ import {
   getIdentityAccess,
   identityConfiguration,
   PLUS_DAILY_LIMIT,
-  refundIdentityAllowance
+  refundIdentityAllowance,
+  SANDBOX_FREE_DAILY_LIMIT
 } from "../WEBSITE/functions/identity.js";
 
 class FakeStatement {
@@ -164,6 +166,29 @@ test("immediate cancellations return Free while scheduled cancellations retain P
   assert.deepEqual(scheduled, { plan: "plus", dailyLimit: PLUS_DAILY_LIMIT });
 });
 
+test("sandbox Free accounts get a testing allowance without changing production", () => {
+  const entitlement = {
+    plan: "free",
+    status: "active",
+    current_period_end: null
+  };
+
+  assert.deepEqual(
+    accessPlanForEnvironment(
+      { PADDLE_ENVIRONMENT: "sandbox" },
+      entitlement
+    ),
+    { plan: "free", dailyLimit: SANDBOX_FREE_DAILY_LIMIT }
+  );
+  assert.deepEqual(
+    accessPlanForEnvironment(
+      { PADDLE_ENVIRONMENT: "production" },
+      entitlement
+    ),
+    { plan: "free", dailyLimit: FREE_DAILY_LIMIT }
+  );
+});
+
 test("D1 enforces the Free daily account allowance atomically", async () => {
   const db = new FakeD1();
   const env = { ROCKY_DB: db };
@@ -176,6 +201,24 @@ test("D1 enforces the Free daily account allowance atomically", async () => {
   assert.equal(first.access.remaining, 0);
   assert.equal(second.allowed, false);
   assert.equal(second.reason, "account_daily_limit");
+});
+
+test("D1 lets an existing sandbox Free account continue testing", async () => {
+  const db = new FakeD1();
+  const now = new Date("2026-07-16T12:00:00.000Z");
+  db.usage.set("user_staging:2026-07-16", 1);
+
+  const decision = await consumeIdentityAllowance(
+    { ROCKY_DB: db, PADDLE_ENVIRONMENT: "sandbox" },
+    "user_staging",
+    now
+  );
+
+  assert.equal(decision.allowed, true);
+  assert.equal(decision.access.plan, "free");
+  assert.equal(decision.access.dailyLimit, SANDBOX_FREE_DAILY_LIMIT);
+  assert.equal(decision.access.used, 2);
+  assert.equal(decision.access.remaining, SANDBOX_FREE_DAILY_LIMIT - 2);
 });
 
 test("D1 gives an active Plus account twenty answers per day", async () => {
