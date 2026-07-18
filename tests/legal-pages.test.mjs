@@ -11,10 +11,11 @@ async function readPage(name) {
 test("homepage links to public pricing and required policies", async () => {
   const html = await readPage("index.html");
 
-  assert.match(html, /href="\/pricing\.html"/);
-  assert.match(html, /href="\/terms\.html"/);
-  assert.match(html, /href="\/refund-policy\.html"/);
-  assert.match(html, /href="\/privacy\.html"/);
+  assert.match(html, /href="\/pricing"/);
+  assert.match(html, /href="\/terms"/);
+  assert.match(html, /href="\/refund-policy"/);
+  assert.match(html, /href="\/privacy"/);
+  assert.doesNotMatch(html, /(?:pricing|terms|refund-policy|privacy)\.html/);
   assert.match(html, /support@rockyaloha\.com/);
 });
 
@@ -25,15 +26,23 @@ test("legal pages identify the operator and provide reciprocal navigation", asyn
     "refund-policy.html",
     "privacy.html"
   ];
+  const routes = ["pricing", "terms", "refund-policy", "privacy"];
   const pages = await Promise.all(names.map(readPage));
 
-  for (const html of pages) {
+  for (const [index, html] of pages.entries()) {
     assert.match(html, /Waikahe Orchards LLC/);
     assert.match(html, /support@rockyaloha\.com/);
-    assert.match(html, /href="\/pricing\.html"/);
-    assert.match(html, /href="\/terms\.html"/);
-    assert.match(html, /href="\/refund-policy\.html"/);
-    assert.match(html, /href="\/privacy\.html"/);
+    assert.match(html, /href="\/pricing"/);
+    assert.match(html, /href="\/terms"/);
+    assert.match(html, /href="\/refund-policy"/);
+    assert.match(html, /href="\/privacy"/);
+    assert.match(
+      html,
+      new RegExp(
+        `<link rel="canonical" href="https://www\\.rockyaloha\\.com/${routes[index]}">`
+      )
+    );
+    assert.doesNotMatch(html, /(?:pricing|terms|refund-policy|privacy)\.html/);
   }
 });
 
