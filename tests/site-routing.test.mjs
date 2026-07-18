@@ -18,6 +18,17 @@ test("redirects the apex domain to canonical www and preserves the request", () 
   );
 });
 
+test("redirects both org aliases to the approved checkout hostname", () => {
+  assert.equal(
+    canonicalRedirectFor("https://rockyaloha.org/pricing"),
+    "https://www.rockyaloha.com/pricing"
+  );
+  assert.equal(
+    canonicalRedirectFor("https://www.rockyaloha.org/terms?from=org"),
+    "https://www.rockyaloha.com/terms?from=org"
+  );
+});
+
 test("does not redirect the canonical or workers.dev hostnames", () => {
   assert.equal(canonicalRedirectFor("https://www.rockyaloha.com/"), null);
   assert.equal(
@@ -67,6 +78,7 @@ test("health fails closed when enabled payments are incomplete", () => {
     PADDLE_MONTHLY_PRICE_ID: "pri_month",
     PADDLE_ANNUAL_PRICE_ID: "pri_year",
     PADDLE_WEBHOOK_SECRET: "secret",
+    PADDLE_API_KEY: "pdl_live_private",
     ROCKY_CHECKOUT_SECRET: "checkout-secret",
     ROCKY_DB: {}
   });

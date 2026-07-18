@@ -7,7 +7,7 @@ import {
 import {
   checkoutContext,
   handlePaddleWebhook,
-  paymentsConfiguration
+  publicPaymentsConfiguration
 } from "./WEBSITE/functions/payments.js";
 import {
   canonicalRedirectFor,
@@ -146,7 +146,7 @@ export default {
           env.TURNSTILE_SITE_KEY && env.TURNSTILE_SECRET_KEY
         ),
         identity: identityConfiguration(env),
-        payments: paymentsConfiguration(env)
+        payments: publicPaymentsConfiguration(env, url.hostname)
       });
     }
 

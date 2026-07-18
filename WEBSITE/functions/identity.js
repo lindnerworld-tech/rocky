@@ -101,10 +101,15 @@ async function ensureAccount(db, userId, nowIso) {
 
 async function entitlementFor(db, userId) {
   return db.prepare(
-    `SELECT plan, status, source, current_period_end
+    `SELECT plan, status, source, current_period_end, paddle_customer_id
      FROM entitlements
      WHERE user_id = ?`
   ).bind(userId).first();
+}
+
+function paddleCustomerIdFor(entitlement) {
+  const customerId = String(entitlement?.paddle_customer_id || "");
+  return /^ctm_[A-Za-z0-9]+$/.test(customerId) ? customerId : "";
 }
 
 async function usedToday(db, userId, utcDay) {
@@ -131,6 +136,7 @@ export async function getIdentityAccess(env, userId, now = new Date()) {
   return {
     authenticated: true,
     ...access,
+    paddleCustomerId: paddleCustomerIdFor(entitlement),
     used,
     remaining: Math.max(0, access.dailyLimit - used)
   };

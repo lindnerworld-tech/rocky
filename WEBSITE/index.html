@@ -715,6 +715,7 @@
     let identityReady = false;
     let userButtonMounted = false;
     let paymentsReady = false;
+    let paymentsInitializing = false;
     let paddleConfig = null;
     let checkoutCompleted = false;
 
@@ -875,17 +876,28 @@
     }
 
     async function initializePayments() {
+      if (paymentsReady || paymentsInitializing || !window.Clerk?.isSignedIn) return;
+      paymentsInitializing = true;
+
       try {
         const config = await loadRockyConfig();
         if (!config.payments?.enabled || !config.payments.ready) return;
 
         paddleConfig = config.payments;
-        await loadScript("https://cdn.paddle.com/paddle/v2/paddle.js");
+        const access = await refreshIdentityAccess();
+        const paddleCustomerId = /^ctm_[A-Za-z0-9]+$/.test(
+          String(access?.paddleCustomerId || "")
+        ) ? access.paddleCustomerId : "";
+
+        if (!window.Paddle) {
+          await loadScript("https://cdn.paddle.com/paddle/v2/paddle.js");
+        }
         if (paddleConfig.environment === "sandbox") {
           window.Paddle.Environment.set("sandbox");
         }
         window.Paddle.Initialize({
           token: paddleConfig.clientToken,
+          ...(paddleCustomerId ? { pwCustomer: { id: paddleCustomerId } } : {}),
           eventCallback(event) {
             if (event?.name === "checkout.completed") {
               checkoutCompleted = true;
@@ -898,9 +910,11 @@
         });
 
         paymentsReady = true;
-        await refreshIdentityAccess();
+        showAccess(access);
       } catch {
         paymentsReady = false;
+      } finally {
+        paymentsInitializing = false;
       }
     }
 
@@ -915,6 +929,7 @@
           window.Clerk.mountUserButton(userButton);
           userButtonMounted = true;
         }
+        await initializePayments();
       } else {
         if (userButtonMounted) {
           window.Clerk.unmountUserButton(userButton);
@@ -1079,7 +1094,6 @@
     window.addEventListener("load", () => {
       initializeTurnstile();
       initializeIdentity();
-      initializePayments();
     });
     document.getElementById("askButton").addEventListener("click", askRocky);
     document.getElementById("annualCheckoutButton").addEventListener("click", () => openPlusCheckout("annual"));

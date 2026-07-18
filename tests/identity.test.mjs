@@ -6,6 +6,7 @@ import {
   bearerTokenFrom,
   consumeIdentityAllowance,
   FREE_DAILY_LIMIT,
+  getIdentityAccess,
   identityConfiguration,
   PLUS_DAILY_LIMIT,
   refundIdentityAllowance
@@ -195,6 +196,25 @@ test("D1 gives an active Plus account twenty answers per day", async () => {
   assert.equal(decision.allowed, true);
   assert.equal(decision.access.dailyLimit, PLUS_DAILY_LIMIT);
   assert.equal(decision.access.remaining, PLUS_DAILY_LIMIT - 1);
+});
+
+test("identity access exposes only a valid Paddle customer ID for Retain", async () => {
+  const db = new FakeD1();
+  db.entitlements.set("user_plus", {
+    plan: "plus",
+    status: "active",
+    source: "paddle",
+    current_period_end: null,
+    paddle_customer_id: "ctm_01rocky"
+  });
+
+  const access = await getIdentityAccess(
+    { ROCKY_DB: db },
+    "user_plus",
+    new Date("2026-07-16T12:00:00.000Z")
+  );
+
+  assert.equal(access.paddleCustomerId, "ctm_01rocky");
 });
 
 test("D1 refunds an answer when the provider fails", async () => {

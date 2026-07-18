@@ -10,6 +10,10 @@
     "ROCKY_GLOBAL_DAILY_LIMIT": "500",
     "ROCKY_IDENTITY_ENABLED": "true",
     "ROCKY_PAYMENTS_ENABLED": "false",
+    "PADDLE_ENVIRONMENT": "production",
+    "PADDLE_CLIENT_TOKEN": "live_d0cd3f2129cb51871efeb2865ee",
+    "PADDLE_MONTHLY_PRICE_ID": "pri_01kxstgr8dya0fs6wceakpfmgk",
+    "PADDLE_ANNUAL_PRICE_ID": "pri_01kxstkh3dwbearsje29hzdyw0",
     "CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsucm9ja3lhbG9oYS5jb20k",
     "CLERK_JWT_KEY": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAy9TVWR/oaK02cEoXA34O\nT0PqV+ahd/A8ozwT9Uz6epYCQL+NKkW+TjqIxyZisUG/9YvXg0nuy1GAJe2Hpo02\n0GB5f2dYDjNKSO3CUkJ4wA0u8TV3tjfgzhC+1qgtzMqwCfUTba7bJmbLu3tculO3\naikjpm6PRa77QdQYwjSYRZXFBdnm+2rxQTqqe/9a99U2E7qqu+xv4jBBq79q/UaA\nXeijvInJAzLSsR/QTDBbosepaPo4flSuce9DE3GCOp89UbJ6gidT6pVz5z240pGu\nWTw6pVXv15toLDVluqUhv0kvQTJmd808b50+rPu/ZqlAAjrcIWcU/h0UksBOirJt\n/QIDAQAB\n-----END PUBLIC KEY-----"
   },

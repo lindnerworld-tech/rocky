@@ -6,6 +6,7 @@ import {
   createCheckoutContext,
   handlePaddleWebhook,
   paymentsConfiguration,
+  publicPaymentsConfiguration,
   processPaddleEvent,
   verifyPaddleSignature
 } from "../WEBSITE/functions/payments.js";
@@ -191,6 +192,90 @@ test("payments configuration exposes only public checkout values", () => {
   const incomplete = makeEnv();
   delete incomplete.ROCKY_CHECKOUT_SECRET;
   assert.equal(paymentsConfiguration(incomplete).ready, false);
+
+  const live = makeEnv();
+  live.PADDLE_ENVIRONMENT = "production";
+  live.PADDLE_API_KEY = "pdl_live_private";
+  assert.equal(paymentsConfiguration(live).environment, "production");
+  assert.equal(paymentsConfiguration(live).ready, true);
+
+  delete live.PADDLE_API_KEY;
+  assert.equal(paymentsConfiguration(live).ready, false);
+});
+
+test("live checkout configuration is exposed only on the approved hostname", () => {
+  const live = makeEnv();
+  live.PADDLE_ENVIRONMENT = "production";
+  live.PADDLE_API_KEY = "pdl_live_private";
+
+  assert.equal(
+    publicPaymentsConfiguration(live, "www.rockyaloha.com").ready,
+    true
+  );
+  const workersDev = publicPaymentsConfiguration(
+    live,
+    "rocky-github-preview.jaiholdings1.workers.dev"
+  );
+  assert.equal(workersDev.ready, false);
+  assert.equal(workersDev.clientToken, "");
+});
+
+test("live checkout context rejects unapproved hostnames", async () => {
+  const live = makeEnv();
+  live.PADDLE_ENVIRONMENT = "production";
+  live.PADDLE_API_KEY = "pdl_live_private";
+
+  const result = await checkoutContext(
+    new Request("https://rocky-github-preview.jaiholdings1.workers.dev/paddle-checkout-context"),
+    live
+  );
+  assert.equal(result.status, 403);
+  assert.equal(result.body.error, "checkout_host_not_allowed");
+});
+
+test("live webhooks require a current Paddle source IP", async () => {
+  const env = makeEnv();
+  env.PADDLE_ENVIRONMENT = "production";
+  env.PADDLE_API_KEY = "pdl_live_private";
+  const now = new Date("2026-07-17T12:00:00.000Z");
+  const event = await subscriptionEvent();
+  const rawBody = JSON.stringify(event);
+  const timestamp = Math.floor(now.getTime() / 1000);
+  const signature = await paddleSignature(env.PADDLE_WEBHOOK_SECRET, timestamp, rawBody);
+  const fetcher = async url => {
+    assert.equal(url, "https://api.paddle.com/ips");
+    return new Response(JSON.stringify({
+      data: { ipv4_cidrs: ["34.232.58.13/32"] }
+    }), { status: 200, headers: { "Content-Type": "application/json" } });
+  };
+
+  const allowed = await handlePaddleWebhook(new Request(
+    "https://www.rockyaloha.com/paddle-webhook",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Paddle-Signature": signature,
+        "CF-Connecting-IP": "34.232.58.13"
+      },
+      body: rawBody
+    }
+  ), env, now, fetcher);
+  assert.equal(allowed.status, 200);
+
+  const rejected = await handlePaddleWebhook(new Request(
+    "https://www.rockyaloha.com/paddle-webhook",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Paddle-Signature": signature,
+        "CF-Connecting-IP": "203.0.113.10"
+      },
+      body: rawBody
+    }
+  ), env, now, fetcher);
+  assert.equal(rejected.status, 403);
 });
 
 test("Paddle signature verification rejects changed and stale payloads", async () => {
