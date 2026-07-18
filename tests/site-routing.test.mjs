@@ -39,6 +39,17 @@ test("does not redirect the canonical or workers.dev hostnames", () => {
   );
 });
 
+test("worker runs before every asset so aliases cannot bypass redirects", async () => {
+  const source = await readFile(
+    new URL("../wrangler.jsonc", import.meta.url),
+    "utf8"
+  );
+  const config = JSON.parse(source.replace(/^\uFEFF/, ""));
+
+  assert.equal(config.assets.run_worker_first, true);
+  assert.equal(config.env.staging.assets.run_worker_first, true);
+});
+
 test("health is ready only when AI and Turnstile are configured", () => {
   const ready = healthState({
     OPENAI_API_KEY: "configured",

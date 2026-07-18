@@ -63,16 +63,7 @@
   "assets": {
     "directory": "./WEBSITE",
     "binding": "ASSETS",
-    "run_worker_first": [
-      "/",
-      "/index.html",
-      "/ask-rocky",
-      "/rocky-config",
-      "/health",
-      "/me",
-      "/paddle-checkout-context",
-      "/paddle-webhook"
-    ]
+    "run_worker_first": true
   },
   "env": {
     "staging": {
@@ -133,16 +124,7 @@
       "assets": {
         "directory": "./WEBSITE",
         "binding": "ASSETS",
-        "run_worker_first": [
-          "/",
-          "/index.html",
-          "/ask-rocky",
-          "/rocky-config",
-          "/health",
-          "/me",
-          "/paddle-checkout-context",
-          "/paddle-webhook"
-        ]
+        "run_worker_first": true
       }
     }
   }

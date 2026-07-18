@@ -717,6 +717,7 @@
     let paymentsReady = false;
     let paymentsInitializing = false;
     let paddleConfig = null;
+    let paddleRetainCustomerId = null;
     let checkoutCompleted = false;
 
     function loadRockyConfig() {
@@ -818,6 +819,43 @@
       document.getElementById("monthlyCheckoutButton").disabled = disabled;
     }
 
+    function paddleCustomerIdFor(access) {
+      const customerId = String(access?.paddleCustomerId || "");
+      return /^ctm_[A-Za-z0-9]+$/.test(customerId) ? customerId : "";
+    }
+
+    function handlePaddleEvent(event) {
+      if (event?.name === "checkout.completed") {
+        checkoutCompleted = true;
+        refreshAfterCheckout();
+      }
+      if (event?.name === "checkout.closed" && !checkoutCompleted) {
+        setCheckoutButtonsDisabled(false);
+      }
+    }
+
+    function updatePaddleRetainCustomer(access) {
+      if (
+        paddleConfig?.environment !== "production" ||
+        !window.Paddle?.Initialized ||
+        typeof window.Paddle.Update !== "function"
+      ) {
+        return;
+      }
+
+      const paddleCustomerId = paddleCustomerIdFor(access);
+      if (paddleRetainCustomerId === paddleCustomerId) return;
+
+      try {
+        window.Paddle.Update({
+          pwCustomer: paddleCustomerId ? { id: paddleCustomerId } : {}
+        });
+        paddleRetainCustomerId = paddleCustomerId;
+      } catch {
+        // Keep the previous ID so the next identity event retries the update.
+      }
+    }
+
     async function openPlusCheckout(interval) {
       const status = document.getElementById("plusStatus");
       if (!paymentsReady || !paddleConfig || !window.Paddle) {
@@ -876,7 +914,7 @@
     }
 
     async function initializePayments() {
-      if (paymentsReady || paymentsInitializing || !window.Clerk?.isSignedIn) return;
+      if (paymentsInitializing || !window.Clerk?.isSignedIn) return;
       paymentsInitializing = true;
 
       try {
@@ -885,31 +923,34 @@
 
         paddleConfig = config.payments;
         const access = await refreshIdentityAccess();
-        const paddleCustomerId = /^ctm_[A-Za-z0-9]+$/.test(
-          String(access?.paddleCustomerId || "")
-        ) ? access.paddleCustomerId : "";
+        if (!access?.authenticated) return;
+        const paddleCustomerId = paddleCustomerIdFor(access);
 
         if (!window.Paddle) {
           await loadScript("https://cdn.paddle.com/paddle/v2/paddle.js");
         }
-        if (paddleConfig.environment === "sandbox") {
-          window.Paddle.Environment.set("sandbox");
-        }
-        window.Paddle.Initialize({
-          token: paddleConfig.clientToken,
-          ...(paddleConfig.environment === "production" && paddleCustomerId
-            ? { pwCustomer: { id: paddleCustomerId } }
-            : {}),
-          eventCallback(event) {
-            if (event?.name === "checkout.completed") {
-              checkoutCompleted = true;
-              refreshAfterCheckout();
-            }
-            if (event?.name === "checkout.closed" && !checkoutCompleted) {
-              setCheckoutButtonsDisabled(false);
-            }
+        if (!window.Paddle.Initialized) {
+          if (paddleConfig.environment === "sandbox") {
+            window.Paddle.Environment.set("sandbox");
           }
-        });
+          window.Paddle.Initialize({
+            token: paddleConfig.clientToken,
+            ...(paddleConfig.environment === "production"
+              ? {
+                  pwCustomer: paddleCustomerId
+                    ? { id: paddleCustomerId }
+                    : {}
+                }
+              : {}),
+            eventCallback: handlePaddleEvent
+          });
+          if (paddleConfig.environment === "production") {
+            paddleRetainCustomerId = paddleCustomerId;
+          }
+        } else {
+          window.Paddle.Update({ eventCallback: handlePaddleEvent });
+          updatePaddleRetainCustomer(access);
+        }
 
         paymentsReady = true;
         showAccess(access);
@@ -933,6 +974,7 @@
         }
         await initializePayments();
       } else {
+        updatePaddleRetainCustomer(null);
         if (userButtonMounted) {
           window.Clerk.unmountUserButton(userButton);
           userButtonMounted = false;
