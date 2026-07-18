@@ -111,3 +111,32 @@ test("homepage declares the www production URL as canonical", async () => {
     /<link rel="canonical" href="https:\/\/www\.rockyaloha\.com\/">/
   );
 });
+
+test("homepage publishes a complete large social preview", async () => {
+  const [html, image] = await Promise.all([
+    readFile(new URL("../WEBSITE/index.html", import.meta.url), "utf8"),
+    readFile(new URL("../WEBSITE/rocky-social-card.jpg", import.meta.url))
+  ]);
+
+  assert.match(html, /<meta property="og:type" content="website">/);
+  assert.match(
+    html,
+    /<meta property="og:title" content="When life gets noisy, ask a rock\.">/
+  );
+  assert.match(
+    html,
+    /<meta property="og:image" content="https:\/\/www\.rockyaloha\.com\/rocky-social-card\.jpg">/
+  );
+  assert.match(html, /<meta property="og:image:width" content="1200">/);
+  assert.match(html, /<meta property="og:image:height" content="630">/);
+  assert.match(
+    html,
+    /<meta name="twitter:card" content="summary_large_image">/
+  );
+  assert.match(
+    html,
+    /<meta name="twitter:image" content="https:\/\/www\.rockyaloha\.com\/rocky-social-card\.jpg">/
+  );
+  assert.deepEqual([...image.subarray(0, 2)], [0xff, 0xd8]);
+  assert.ok(image.byteLength < 1_000_000);
+});
