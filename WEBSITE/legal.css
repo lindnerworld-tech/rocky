@@ -1,0 +1,226 @@
+:root {
+  --ink: #142129;
+  --deep-ocean: #102b39;
+  --ocean: #166979;
+  --turquoise: #59c4c4;
+  --sunrise: #f2a65a;
+  --sand: #f5efe4;
+  --cream: #fffaf1;
+  --white: #ffffff;
+  --muted: #5d6a70;
+  --line: #d9dedb;
+  --shadow: 0 22px 60px rgba(16, 43, 57, .12);
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--sand);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--ocean); }
+
+.skip-link {
+  position: absolute;
+  left: 16px;
+  top: -60px;
+  z-index: 20;
+  padding: 10px 14px;
+  color: var(--white);
+  background: var(--deep-ocean);
+}
+
+.skip-link:focus { top: 12px; }
+
+.legal-header {
+  color: var(--white);
+  background:
+    radial-gradient(circle at 82% 10%, rgba(89,196,196,.24), transparent 34%),
+    linear-gradient(145deg, #0a222e, var(--deep-ocean) 58%, #165d68);
+}
+
+.legal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  width: min(1040px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 24px 0;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  color: var(--white);
+  text-decoration: none;
+  font-weight: 900;
+  letter-spacing: .16em;
+}
+
+.brand-mark {
+  width: 31px;
+  height: 26px;
+  border: 2px solid rgba(255,255,255,.86);
+  border-radius: 48% 52% 44% 56%;
+  background: rgba(255,255,255,.12);
+  box-shadow: inset 0 -7px 12px rgba(0,0,0,.18);
+  transform: rotate(-4deg);
+}
+
+.home-link {
+  color: rgba(255,255,255,.88);
+  text-underline-offset: 4px;
+}
+
+.legal-hero {
+  width: min(860px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 72px 0 82px;
+}
+
+.kicker {
+  margin: 0 0 12px;
+  color: #8de1dc;
+  font-size: .78rem;
+  font-weight: 850;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+}
+
+h1, h2, h3 { line-height: 1.18; }
+
+h1 {
+  margin: 0;
+  font-size: clamp(2.7rem, 7vw, 5.1rem);
+  letter-spacing: -.045em;
+}
+
+.legal-hero p:last-child {
+  max-width: 700px;
+  margin: 18px 0 0;
+  color: rgba(255,255,255,.82);
+  font-size: 1.06rem;
+}
+
+.legal-main {
+  width: min(860px, calc(100% - 40px));
+  margin: -34px auto 72px;
+}
+
+.legal-card {
+  padding: clamp(28px, 5vw, 58px);
+  border: 1px solid rgba(255,255,255,.78);
+  border-radius: 24px;
+  background: var(--cream);
+  box-shadow: var(--shadow);
+}
+
+.effective {
+  margin: 0 0 34px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: .92rem;
+}
+
+.legal-card h2 {
+  margin: 38px 0 10px;
+  color: var(--deep-ocean);
+  font-size: 1.42rem;
+}
+
+.legal-card h2:first-of-type { margin-top: 0; }
+
+.legal-card h3 {
+  margin: 24px 0 8px;
+  font-size: 1.05rem;
+}
+
+.legal-card p, .legal-card li { color: #34444c; }
+
+.legal-card ul { padding-left: 22px; }
+
+.notice {
+  margin: 28px 0;
+  padding: 18px 20px;
+  border-left: 4px solid var(--sunrise);
+  border-radius: 0 12px 12px 0;
+  background: #fff4e4;
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin: 26px 0 34px;
+}
+
+.price-card {
+  padding: 26px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--white);
+}
+
+.price-card.featured {
+  border-color: rgba(22,105,121,.48);
+  box-shadow: 0 14px 34px rgba(22,105,121,.1);
+}
+
+.price-card h2 { margin: 0 0 5px; }
+
+.price {
+  margin: 0 0 18px;
+  color: var(--deep-ocean) !important;
+  font-size: 1.55rem;
+  font-weight: 900;
+}
+
+.price small {
+  color: var(--muted);
+  font-size: .85rem;
+  font-weight: 600;
+}
+
+.legal-footer {
+  padding: 38px 20px;
+  color: rgba(255,255,255,.68);
+  background: #091b24;
+  text-align: center;
+}
+
+.legal-footer strong {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--white);
+  letter-spacing: .16em;
+}
+
+.legal-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 18px;
+  margin-top: 16px;
+  font-size: .88rem;
+}
+
+.legal-links a {
+  color: rgba(255,255,255,.84);
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 650px) {
+  .legal-nav, .legal-hero, .legal-main { width: min(100% - 28px, 860px); }
+  .legal-hero { padding: 54px 0 66px; }
+  .pricing-grid { grid-template-columns: 1fr; }
+}
