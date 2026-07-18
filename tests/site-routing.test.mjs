@@ -66,8 +66,23 @@ test("health is ready only when AI and Turnstile are configured", () => {
 
   assert.equal(ready.status, 200);
   assert.equal(ready.body.status, "ok");
+  assert.equal(ready.body.voiceEnabled, false);
+  assert.equal(ready.body.voiceReady, true);
   assert.equal(stopped.status, 503);
   assert.equal(stopped.body.status, "degraded");
+});
+
+test("health fails closed when enabled voice is missing its provider key", () => {
+  const degraded = healthState({
+    ROCKY_AI_ENABLED: "true",
+    ROCKY_VOICE_ENABLED: "true",
+    TURNSTILE_SITE_KEY: "configured",
+    TURNSTILE_SECRET_KEY: "configured"
+  });
+
+  assert.equal(degraded.status, 503);
+  assert.equal(degraded.body.voiceEnabled, true);
+  assert.equal(degraded.body.voiceReady, false);
 });
 
 test("health fails closed when enabled payments are incomplete", () => {

@@ -608,6 +608,43 @@
       font-style: italic;
     }
 
+    .voice-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 12px;
+      margin-top: 15px;
+    }
+
+    .voice-controls[hidden] { display: none; }
+
+    .voice-button {
+      min-height: 40px;
+      padding: 8px 14px;
+      border: 1px solid rgba(115,212,209,.55);
+      border-radius: 999px;
+      color: var(--white);
+      background: rgba(8,31,40,.62);
+      font: inherit;
+      font-size: .86rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .voice-button:hover:not(:disabled),
+    .voice-button:focus-visible {
+      border-color: var(--turquoise);
+      background: rgba(89,196,196,.18);
+    }
+
+    .voice-button:disabled { cursor: wait; opacity: .7; }
+
+    .voice-disclosure,
+    .voice-status {
+      color: rgba(255,255,255,.62);
+      font-size: .74rem;
+    }
+
     .footer {
       padding: 42px 20px;
       color: rgba(255,255,255,.65);
@@ -800,6 +837,12 @@
           <div class="answer" id="answerBox" aria-live="polite">
             <p class="answer-label">Rocky says</p>
             <p class="answer-text" id="rockyAnswer">The rock is listening.</p>
+            <div class="voice-controls" id="rockyVoiceControls" hidden>
+              <button class="voice-button" id="hearRockyButton" type="button" aria-pressed="false" aria-describedby="rockyVoiceDisclosure">Hear Rocky</button>
+              <span class="voice-disclosure" id="rockyVoiceDisclosure">AI-generated voice.</span>
+              <span class="voice-status" id="rockyVoiceStatus" aria-live="polite"></span>
+              <audio id="rockyAudio" preload="none" hidden></audio>
+            </div>
           </div>
         </div>
       </div>
@@ -838,6 +881,10 @@
     let turnstileToken = "";
     let turnstileWidgetId = null;
     let rockyConfigPromise = null;
+    let rockyVoiceEnabled = false;
+    let latestRockyAnswer = "";
+    let latestSpeechTicket = "";
+    let rockyAudioUrl = "";
     let identityReady = false;
     let userButtonMounted = false;
     let paymentsReady = false;
@@ -859,6 +906,107 @@
       }
 
       return rockyConfigPromise;
+    }
+
+    function resetRockyVoice() {
+      const controls = document.getElementById("rockyVoiceControls");
+      const button = document.getElementById("hearRockyButton");
+      const status = document.getElementById("rockyVoiceStatus");
+      const audio = document.getElementById("rockyAudio");
+
+      audio.pause();
+      audio.removeAttribute("src");
+      audio.load();
+      if (rockyAudioUrl) URL.revokeObjectURL(rockyAudioUrl);
+
+      rockyAudioUrl = "";
+      latestRockyAnswer = "";
+      latestSpeechTicket = "";
+      controls.hidden = true;
+      button.disabled = false;
+      button.textContent = "Hear Rocky";
+      button.setAttribute("aria-pressed", "false");
+      status.textContent = "";
+    }
+
+    function prepareRockyVoice(answer, speechTicket) {
+      resetRockyVoice();
+      if (!rockyVoiceEnabled || !answer || !speechTicket) return;
+
+      latestRockyAnswer = answer;
+      latestSpeechTicket = speechTicket;
+      document.getElementById("rockyVoiceControls").hidden = false;
+    }
+
+    async function hearRocky() {
+      const button = document.getElementById("hearRockyButton");
+      const status = document.getElementById("rockyVoiceStatus");
+      const audio = document.getElementById("rockyAudio");
+
+      if (!audio.paused && !audio.ended) {
+        audio.pause();
+        button.textContent = "Hear Rocky";
+        button.setAttribute("aria-pressed", "false");
+        status.textContent = "Rocky paused.";
+        return;
+      }
+
+      if (!latestRockyAnswer || !latestSpeechTicket) return;
+
+      if (!rockyAudioUrl) {
+        button.disabled = true;
+        button.textContent = "Finding Rocky's voice...";
+        status.textContent = "";
+
+        try {
+          const response = await fetch("/speak-rocky", {
+            method: "POST",
+            headers: {
+              "Accept": "audio/mpeg",
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              answer: latestRockyAnswer,
+              speechTicket: latestSpeechTicket
+            })
+          });
+
+          if (!response.ok) {
+            let error = {};
+            try { error = await response.json(); } catch {}
+            if (error.error === "invalid_or_expired_speech_ticket") {
+              throw new Error("expired");
+            }
+            throw new Error("unavailable");
+          }
+
+          const audioBlob = await response.blob();
+          if (!audioBlob.size) throw new Error("unavailable");
+          rockyAudioUrl = URL.createObjectURL(audioBlob);
+          audio.src = rockyAudioUrl;
+        } catch (error) {
+          button.disabled = false;
+          button.textContent = "Hear Rocky";
+          button.setAttribute("aria-pressed", "false");
+          status.textContent = error.message === "expired"
+            ? "Voice expired. Ask Rocky again for a fresh answer."
+            : "Rocky's voice is quiet right now. Try again shortly.";
+          return;
+        }
+      }
+
+      button.disabled = false;
+      try {
+        audio.currentTime = 0;
+        await audio.play();
+        button.textContent = "Pause Rocky";
+        button.setAttribute("aria-pressed", "true");
+        status.textContent = "Rocky is speaking.";
+      } catch {
+        button.textContent = "Hear Rocky";
+        button.setAttribute("aria-pressed", "false");
+        status.textContent = "Voice ready—tap Hear Rocky once more.";
+      }
     }
 
     function loadScript(src, attributes = {}) {
@@ -1159,6 +1307,9 @@
 
       try {
         const config = await loadRockyConfig();
+        rockyVoiceEnabled = Boolean(
+          config.voice?.enabled && config.voice?.ready
+        );
 
         if (!config.protected || !config.turnstileSiteKey) {
           throw new Error("Protection is not configured");
@@ -1223,6 +1374,7 @@
       button.disabled = true;
       button.textContent = "Rocky is thinking...";
       answerField.textContent = "The tide is turning. Give Rocky a moment.";
+      resetRockyVoice();
 
       try {
         const token = await sessionToken();
@@ -1245,6 +1397,8 @@
 
         if (!response.ok) return;
 
+        prepareRockyVoice(data.answer, data.speechTicket);
+
         const nextCounter = Number(localStorage.getItem("rockyCounter") || 0) + 1;
         localStorage.setItem("rockyCounter", String(nextCounter));
         const deviceCounter = document.getElementById("rockyCounter");
@@ -1266,6 +1420,13 @@
       initializeIdentity();
     });
     document.getElementById("askButton").addEventListener("click", askRocky);
+    document.getElementById("hearRockyButton").addEventListener("click", hearRocky);
+    document.getElementById("rockyAudio").addEventListener("ended", () => {
+      const button = document.getElementById("hearRockyButton");
+      button.textContent = "Hear Rocky again";
+      button.setAttribute("aria-pressed", "false");
+      document.getElementById("rockyVoiceStatus").textContent = "";
+    });
     document.getElementById("annualCheckoutButton").addEventListener("click", () => openPlusCheckout("annual"));
     document.getElementById("monthlyCheckoutButton").addEventListener("click", () => openPlusCheckout("monthly"));
     document.getElementById("rockyQuestion").addEventListener("keydown", event => {
