@@ -126,8 +126,10 @@ test("speaks a signed Rocky answer with the approved model and voice", async t =
   assert.equal(providerRequest.body.voice, "onyx");
   assert.equal(providerRequest.body.input, ANSWER);
   assert.equal(providerRequest.body.response_format, "mp3");
-  assert.match(providerRequest.body.instructions, /deeply seasoned, low baritone/i);
-  assert.match(providerRequest.body.instructions, /avoid youthful brightness/i);
+  assert.equal(providerRequest.body.speed, 0.78);
+  assert.match(providerRequest.body.instructions, /late eighties or nineties/i);
+  assert.match(providerRequest.body.instructions, /never sound under seventy/i);
+  assert.match(providerRequest.body.instructions, /deep chest resonance/i);
   assert.match(providerRequest.body.instructions, /quiet authority without arrogance/i);
   assert.match(providerRequest.body.instructions, /do not imitate Hawaiian, local, or pidgin/i);
 });
