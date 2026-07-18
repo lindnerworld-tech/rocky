@@ -517,6 +517,22 @@
       letter-spacing: .18em;
     }
 
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px 18px;
+      margin-top: 18px;
+      font-size: .88rem;
+    }
+
+    .footer-links a {
+      color: rgba(255,255,255,.82);
+      text-underline-offset: 3px;
+    }
+
+    .footer-links a:hover { color: var(--white); }
+
     @media (max-width: 860px) {
       .hero {
         min-height: 760px;
@@ -666,7 +682,14 @@
 
   <footer class="footer">
     <strong>PROJECT ROCKY</strong>
-    NT2 Forever · Built with perspective and aloha
+    <span>NT2 Forever · Built with perspective and aloha</span>
+    <nav class="footer-links" aria-label="Legal and company information">
+      <a href="/pricing">Pricing</a>
+      <a href="/terms">Terms &amp; Conditions</a>
+      <a href="/refund-policy">Refund Policy</a>
+      <a href="/privacy">Privacy Policy</a>
+      <a href="mailto:support@rockyaloha.com">Contact</a>
+    </nav>
   </footer>
 
   <script>
