@@ -72,10 +72,11 @@ export function accessPlanFor(entitlement, now = new Date()) {
     return { plan: "free", dailyLimit: FREE_DAILY_LIMIT };
   }
 
-  const hasNotEnded = !entitlement.current_period_end ||
+  const hasPeriodEnd = Boolean(entitlement.current_period_end);
+  const hasNotEnded = !hasPeriodEnd ||
     new Date(entitlement.current_period_end).getTime() > now.getTime();
   const isActive = ACTIVE_PLUS_STATUSES.has(entitlement.status) ||
-    (entitlement.status === "canceled" && hasNotEnded);
+    (entitlement.status === "canceled" && hasPeriodEnd && hasNotEnded);
 
   if (!isActive || !hasNotEnded) {
     return { plan: "free", dailyLimit: FREE_DAILY_LIMIT };

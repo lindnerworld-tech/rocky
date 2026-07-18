@@ -146,6 +146,23 @@ test("resolves active and expired Plus entitlements", () => {
   assert.deepEqual(expired, { plan: "free", dailyLimit: FREE_DAILY_LIMIT });
 });
 
+test("immediate cancellations return Free while scheduled cancellations retain Plus", () => {
+  const now = new Date("2026-07-16T12:00:00.000Z");
+  const immediate = accessPlanFor({
+    plan: "plus",
+    status: "canceled",
+    current_period_end: null
+  }, now);
+  const scheduled = accessPlanFor({
+    plan: "plus",
+    status: "canceled",
+    current_period_end: "2026-08-16T12:00:00.000Z"
+  }, now);
+
+  assert.deepEqual(immediate, { plan: "free", dailyLimit: FREE_DAILY_LIMIT });
+  assert.deepEqual(scheduled, { plan: "plus", dailyLimit: PLUS_DAILY_LIMIT });
+});
+
 test("D1 enforces the Free daily account allowance atomically", async () => {
   const db = new FakeD1();
   const env = { ROCKY_DB: db };
