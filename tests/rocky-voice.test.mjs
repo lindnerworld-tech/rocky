@@ -123,10 +123,12 @@ test("speaks a signed Rocky answer with the approved model and voice", async t =
   assert.equal(providerRequest.url, "https://api.openai.com/v1/audio/speech");
   assert.equal(providerRequest.authorization, `Bearer ${OPENAI_API_KEY}`);
   assert.equal(providerRequest.body.model, "gpt-4o-mini-tts");
-  assert.equal(providerRequest.body.voice, "cedar");
+  assert.equal(providerRequest.body.voice, "onyx");
   assert.equal(providerRequest.body.input, ANSWER);
   assert.equal(providerRequest.body.response_format, "mp3");
-  assert.match(providerRequest.body.instructions, /low, warm, grounded/i);
+  assert.match(providerRequest.body.instructions, /deeply seasoned, low baritone/i);
+  assert.match(providerRequest.body.instructions, /avoid youthful brightness/i);
+  assert.match(providerRequest.body.instructions, /quiet authority without arrogance/i);
   assert.match(providerRequest.body.instructions, /do not imitate Hawaiian, local, or pidgin/i);
 });
 

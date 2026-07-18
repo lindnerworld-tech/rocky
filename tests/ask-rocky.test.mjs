@@ -64,6 +64,7 @@ test("returns a protected Rocky answer", async t => {
   });
 
   const calls = [];
+  let providerBody;
   globalThis.fetch = async (url, options) => {
     calls.push(String(url));
 
@@ -74,6 +75,8 @@ test("returns a protected Rocky answer", async t => {
         action: "ask_rocky"
       });
     }
+
+    providerBody = JSON.parse(options.body);
 
     return Response.json({
       output: [
@@ -116,6 +119,8 @@ test("returns a protected Rocky answer", async t => {
     "test-openai-key",
     "rocky.test"
   ), true);
+  assert.match(providerBody.input, /speak with earned certainty/i);
+  assert.match(providerBody.input, /never confuse authority with infallibility/i);
   assert.equal(calls.length, 2);
 });
 

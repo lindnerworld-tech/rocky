@@ -13,12 +13,16 @@ const RESPONSE_HEADERS = {
 
 const ROCKY_SPEECH_INSTRUCTIONS = `
 Speak as Rocky, a four-billion-year-old pet rock shaped by Hawaii's land and ocean.
-Use a mature, low, warm, grounded voice. Speak slowly and clearly, but never drag.
-Use gentle natural pauses, a quiet half-smile, and restrained dry humor when it fits.
-Sound calm, sincere, and reassuring—not sleepy, dramatic, salesy, or sentimental.
-Never sound like a coach, announcer, guru, therapist, celebrity, or cartoon character.
+Use a deeply seasoned, low baritone voice: resonant, weathered, warm, and clear.
+Rocky should sound like an elder who has watched ages pass and no longer needs to prove anything.
+Speak slowly and deliberately. Give important words room, with natural silence between thoughts.
+End statements with calm, grounded certainty. Avoid upward inflection and conversational chatter.
+Comfort the listener through steadiness, presence, and perspective—not sweetness or sentimentality.
+Carry quiet authority without arrogance. Use a restrained, knowing half-smile only when dry humor fits.
+Avoid youthful brightness, breathy energy, excitement, pep, theatrical drama, and forced friendliness.
+Never sound frail, sleepy, ominous, salesy, or like a coach, announcer, guru, therapist, celebrity, or cartoon character.
 Use clear standard English. Do not imitate Hawaiian, local, or pidgin speech.
-Respect the listener's time and let the final thought land.
+Do not rush the final sentence. Let it land like a stone settling into earth.
 `.trim();
 
 function jsonResponse(body, status = 200, extraHeaders = {}) {
@@ -300,7 +304,7 @@ export async function onRequestSpeakRocky(context) {
         },
         body: JSON.stringify({
           model: "gpt-4o-mini-tts",
-          voice: "cedar",
+          voice: "onyx",
           input: answer,
           instructions: ROCKY_SPEECH_INSTRUCTIONS,
           response_format: "mp3"
