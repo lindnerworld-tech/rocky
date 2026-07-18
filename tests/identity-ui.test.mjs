@@ -46,6 +46,7 @@ test("homepage loads Paddle only when public payment configuration is ready", as
   assert.match(html, /cdn\.paddle\.com\/paddle\/v2\/paddle\.js/);
   assert.match(html, /Paddle\.Environment\.set\("sandbox"\)/);
   assert.match(html, /Paddle\.Checkout\.open/);
+  assert.match(html, /paddleConfig\.environment === "production" && paddleCustomerId/);
   assert.match(html, /pwCustomer: \{ id: paddleCustomerId \}/);
   assert.match(html, /paddle-checkout-context/);
   assert.match(html, /customData\.error === "already_plus"/);

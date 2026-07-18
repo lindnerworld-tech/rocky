@@ -897,7 +897,9 @@
         }
         window.Paddle.Initialize({
           token: paddleConfig.clientToken,
-          ...(paddleCustomerId ? { pwCustomer: { id: paddleCustomerId } } : {}),
+          ...(paddleConfig.environment === "production" && paddleCustomerId
+            ? { pwCustomer: { id: paddleCustomerId } }
+            : {}),
           eventCallback(event) {
             if (event?.name === "checkout.completed") {
               checkoutCompleted = true;
