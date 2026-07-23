@@ -70,6 +70,8 @@ test("production keeps charging off while retaining the approved Stripe prices",
   assert.match(config, /"ROCKY_PAYMENTS_ENABLED": "false"/);
   assert.match(config, /price_1TwEBR9yakPvhQdpkVD7vDlk/);
   assert.match(config, /price_1TwDzA9yakPvhQdpamdErN02/);
+  assert.match(config, /price_1TwEy7QAn31d66ev8DGXt8Mo/);
+  assert.match(config, /price_1TwF0sQAn31d66evWfDKeRUL/);
   assert.doesNotMatch(config, /STRIPE_SECRET_KEY/);
   assert.doesNotMatch(config, /STRIPE_WEBHOOK_SECRET/);
 });

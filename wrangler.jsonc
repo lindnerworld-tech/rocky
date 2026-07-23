@@ -83,6 +83,8 @@
         "ROCKY_IDENTITY_ENABLED": "true",
         "ROCKY_PAYMENTS_ENABLED": "false",
         "ROCKY_SITE_URL": "https://rocky-github-preview-staging.jaiholdings1.workers.dev",
+        "STRIPE_MONTHLY_PRICE_ID": "price_1TwEy7QAn31d66ev8DGXt8Mo",
+        "STRIPE_ANNUAL_PRICE_ID": "price_1TwF0sQAn31d66evWfDKeRUL",
         "CLERK_PUBLISHABLE_KEY": "pk_test_cHJvbW90ZWQtcGVnYXN1cy01OC5jbGVyay5hY2NvdW50cy5kZXYk",
         "CLERK_JWT_KEY": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoZ8yPPSZlrUBIro56tkV\nEELa8afGDMhao30U79/LhoGPQr4/pXM9E7kTDSxGsIOb/tEikWfdZYbVOuyFZ2+w\neYEBqeFl2dTbdno8esr7rQSdR79fzwOJL6VWXDVCVXGL51f1i6a4VnwGyp2brqGJ\nLBKO0sniBgCOhNncED12CgPjagfXIOm2a3id9S9is4m0/1iajKHybXzz1gSiUKbP\nzzlS64kzIAmzAB2nblzVXtcrcgN6h6NoFn7z1jDbYm5TnwbuYlhS/ns4bnMplkpC\nmwVwSAW5O5SGOzqSpBnAivKguIDvf+ulz6O/RgwR6NHFKQV5GQoj5co/KFBrj5pG\nCQIDAQAB\n-----END PUBLIC KEY-----"
       },
