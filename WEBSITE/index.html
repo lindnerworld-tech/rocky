@@ -647,6 +647,14 @@
             </div>
             <p class="plus-status" id="plusStatus" aria-live="polite"></p>
           </div>
+          <div class="plus-offer" id="billingPortalOffer" hidden>
+            <strong>Rocky Plus billing</strong>
+            <p>View invoices, update payment details, or cancel securely with Stripe.</p>
+            <div class="plus-actions">
+              <button class="plus-button" id="billingPortalButton" type="button">Manage subscription</button>
+            </div>
+            <p class="plus-status" id="billingPortalStatus" aria-live="polite"></p>
+          </div>
         </div>
 
         <div class="ask-card">
@@ -759,6 +767,7 @@
 
       const counter = document.getElementById("accessCounter");
       const plusOffer = document.getElementById("plusOffer");
+      const billingPortalOffer = document.getElementById("billingPortalOffer");
       if (access.authenticated) {
         const planName = access.plan === "plus" ? "Rocky Plus" : "Rocky Free";
         counter.textContent = `${planName}: ${access.remaining} of ${access.dailyLimit} answers left today`;
@@ -770,6 +779,10 @@
         paymentsReady &&
         access.authenticated &&
         access.plan !== "plus"
+      );
+      billingPortalOffer.hidden = !(
+        access.authenticated &&
+        access.billingManaged
       );
     }
 
@@ -871,6 +884,41 @@
         status.textContent = "Checkout needs a moment. Please try again.";
       } finally {
         if (!redirecting) setCheckoutButtonsDisabled(false);
+      }
+    }
+
+    async function openBillingPortal() {
+      const button = document.getElementById("billingPortalButton");
+      const status = document.getElementById("billingPortalStatus");
+      if (!window.Clerk?.isSignedIn) {
+        window.Clerk?.openSignIn();
+        return;
+      }
+
+      button.disabled = true;
+      status.textContent = "Opening secure billing...";
+      let redirecting = false;
+
+      try {
+        const token = await sessionToken();
+        const response = await fetch("/create-billing-portal-session", {
+          method: "POST",
+          headers: {
+            "Accept": "application/json",
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        const result = await response.json();
+        if (!response.ok || !result.portalUrl) {
+          throw new Error("Billing portal unavailable");
+        }
+
+        redirecting = true;
+        window.location.assign(result.portalUrl);
+      } catch {
+        status.textContent = "Secure billing needs a moment. Please try again.";
+      } finally {
+        if (!redirecting) button.disabled = false;
       }
     }
 
@@ -1086,6 +1134,7 @@
     document.getElementById("askButton").addEventListener("click", askRocky);
     document.getElementById("annualCheckoutButton").addEventListener("click", () => openPlusCheckout("annual"));
     document.getElementById("monthlyCheckoutButton").addEventListener("click", () => openPlusCheckout("monthly"));
+    document.getElementById("billingPortalButton").addEventListener("click", openBillingPortal);
     document.getElementById("rockyQuestion").addEventListener("keydown", event => {
       if ((event.ctrlKey || event.metaKey) && event.key === "Enter") askRocky();
     });

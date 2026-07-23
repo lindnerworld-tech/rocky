@@ -20,12 +20,45 @@ signing secrets are not.
 ## Current safety state
 
 - Production payments: disabled with `ROCKY_PAYMENTS_ENABLED=false`
-- Staging payments: disabled until its webhook, encrypted secrets, and database
-  migration are ready
+- Production D1: Stripe entitlement migration applied; existing record preserved
+- Stripe live account: under review; live webhook and secrets remain pending
+- Staging payments: disabled again after successful end-to-end sandbox tests
+- Cloudflare staging build branch: `agent/stripe-staging-safe`
+- Stripe sandbox webhook destination: active for five subscription events
+- Stripe sandbox API and webhook secrets: stored as encrypted staging secrets
 - Checkout: Stripe-hosted, Managed Payments enabled
+- Billing management: authenticated Stripe-hosted customer portal
+- Cancellation webhooks: continue processing when new checkout is disabled
 - Access: granted only from signed Stripe subscription webhooks
 - Duplicate webhook events: ignored
 - Unknown prices and untrusted account metadata: rejected
+
+## Staging proof — 2026-07-23
+
+- Replaced the stale Paddle staging deployment with the current Stripe build.
+- Applied `0003_stripe_entitlements.sql` manually to
+  `rocky-identity-staging`; the existing entitlement record was preserved.
+- Monthly sandbox Checkout passed at $7.99 and granted Rocky Plus.
+- Immediate monthly cancellation passed and returned the account to Rocky Free.
+- Annual sandbox Checkout passed at $59 and granted Rocky Plus.
+- D1 recorded the correct Stripe subscription, customer, and approved Price IDs.
+- Signed subscription webhook deliveries were processed successfully.
+- Idempotency is enforced by unique event IDs and the automated duplicate-event
+  test; a manual Dashboard replay was not required.
+- Stripe customer portal opened successfully with the correct sandbox billing history.
+- The canceled annual sandbox account returned to Rocky Free.
+- The full suite passes 43 tests, including cancellation delivery while checkout is disabled.
+- Staging was returned to `ROCKY_PAYMENTS_ENABLED=false` after testing.
+
+## Production preparation — 2026-07-23
+
+- Created a D1 recovery bookmark before changing production.
+- Applied `0003_stripe_entitlements.sql` manually to
+  `rocky-identity-production`.
+- Preserved the existing production entitlement record.
+- Verified all three Stripe entitlement columns and both subscription indexes.
+- Kept production payments disabled.
+- Paused live configuration while Stripe reviews the account for go-live.
 
 ## Four go-live gates
 

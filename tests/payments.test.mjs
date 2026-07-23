@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  createStripeBillingPortal,
   createStripeCheckout,
   handleStripeWebhook,
   paymentsConfiguration,
@@ -25,6 +26,12 @@ class FakeStatement {
     if (this.sql.includes("SELECT processed_at FROM entitlement_events")) {
       const event = this.db.events.get(this.params[0]);
       return event ? { processed_at: event.processedAt } : null;
+    }
+    if (this.sql.includes("SELECT stripe_customer_id")) {
+      const entitlement = this.db.entitlements.get(this.params[0]);
+      return entitlement
+        ? { stripe_customer_id: entitlement.customerId }
+        : null;
     }
     if (this.sql.includes("WHERE stripe_subscription_id = ?")) {
       for (const [userId, entitlement] of this.db.entitlements) {
@@ -334,6 +341,80 @@ test("checkout rejects unknown plans and existing Plus accounts", async () => {
   assert.deepEqual(alreadyPlus.body, { error: "already_plus" });
 });
 
+test("billing portal uses the authenticated user's stored Stripe customer", async () => {
+  const db = new FakeD1();
+  db.entitlements.set("user_rocky", {
+    customerId: "cus_01rocky"
+  });
+  const env = makeEnv(db);
+  env.ROCKY_PAYMENTS_ENABLED = "false";
+  let stripeRequest;
+
+  const result = await createStripeBillingPortal(
+    new Request(
+      "https://www.rockyaloha.com/create-billing-portal-session",
+      { method: "POST" }
+    ),
+    env,
+    async (url, init) => {
+      stripeRequest = { url, init };
+      return new Response(JSON.stringify({
+        id: "bps_01rocky",
+        url: "https://billing.stripe.com/p/session/test_rocky"
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      });
+    },
+    async () => ({ authenticated: true, userId: "user_rocky" })
+  );
+
+  assert.equal(result.status, 200);
+  assert.equal(
+    result.body.portalUrl,
+    "https://billing.stripe.com/p/session/test_rocky"
+  );
+  assert.equal(
+    stripeRequest.url,
+    "https://api.stripe.com/v1/billing_portal/sessions"
+  );
+  assert.equal(
+    stripeRequest.init.headers.Authorization,
+    "Bearer sk_test_not-a-real-key"
+  );
+  const form = new URLSearchParams(stripeRequest.init.body);
+  assert.equal(form.get("customer"), "cus_01rocky");
+  assert.equal(form.get("return_url"), "https://www.rockyaloha.com/");
+});
+
+test("billing portal requires sign-in and a linked Stripe customer", async () => {
+  const request = new Request(
+    "https://www.rockyaloha.com/create-billing-portal-session",
+    { method: "POST" }
+  );
+  const noIdentity = await createStripeBillingPortal(
+    request,
+    makeEnv(),
+    async () => {
+      throw new Error("Stripe must not be called");
+    },
+    async () => ({ authenticated: false })
+  );
+  const noCustomer = await createStripeBillingPortal(
+    new Request(request),
+    makeEnv(),
+    async () => {
+      throw new Error("Stripe must not be called");
+    },
+    async () => ({ authenticated: true, userId: "user_free" })
+  );
+
+  assert.equal(noIdentity.status, 401);
+  assert.deepEqual(noIdentity.body, { error: "sign_in_required" });
+  assert.equal(noCustomer.status, 404);
+  assert.deepEqual(noCustomer.body, { error: "billing_account_not_found" });
+});
+
 test("verified subscription events grant Plus and are idempotent", async () => {
   const db = new FakeD1();
   const env = makeEnv(db);
@@ -422,4 +503,41 @@ test("webhook handler verifies the raw body before updating entitlements", async
   assert.equal(response.status, 200);
   assert.equal(response.body.updated, true);
   assert.equal(db.entitlements.get("user_rocky").plan, "plus");
+});
+
+test("webhook keeps processing cancellations while new checkout is disabled", async () => {
+  const db = new FakeD1();
+  const env = makeEnv(db);
+  await processStripeEvent(env, subscriptionEvent());
+  env.ROCKY_PAYMENTS_ENABLED = "false";
+
+  const now = new Date("2026-07-18T12:00:00.000Z");
+  const event = subscriptionEvent({
+    eventId: "evt_02disabled",
+    eventType: "customer.subscription.deleted",
+    status: "canceled",
+    created: Math.floor(now.getTime() / 1000),
+    includeMetadata: false
+  });
+  event.data.object.items.data[0].current_period_end = null;
+  const rawBody = JSON.stringify(event);
+  const signature = await stripeSignature(
+    env.STRIPE_WEBHOOK_SECRET,
+    Math.floor(now.getTime() / 1000),
+    rawBody
+  );
+  const request = new Request("https://www.rockyaloha.com/stripe-webhook", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Stripe-Signature": signature
+    },
+    body: rawBody
+  });
+
+  const response = await handleStripeWebhook(request, env, now);
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.updated, true);
+  assert.equal(db.entitlements.get("user_rocky").status, "canceled");
 });

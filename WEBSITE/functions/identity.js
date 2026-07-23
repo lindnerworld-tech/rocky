@@ -101,7 +101,7 @@ async function ensureAccount(db, userId, nowIso) {
 
 async function entitlementFor(db, userId) {
   return db.prepare(
-    `SELECT plan, status, source, current_period_end
+    `SELECT plan, status, source, current_period_end, stripe_customer_id
      FROM entitlements
      WHERE user_id = ?`
   ).bind(userId).first();
@@ -131,6 +131,7 @@ export async function getIdentityAccess(env, userId, now = new Date()) {
   return {
     authenticated: true,
     ...access,
+    billingManaged: Boolean(entitlement?.stripe_customer_id),
     used,
     remaining: Math.max(0, access.dailyLimit - used)
   };
@@ -145,6 +146,7 @@ export async function consumeIdentityAllowance(env, userId, now = new Date()) {
 
   const entitlement = await entitlementFor(env.ROCKY_DB, userId);
   const access = accessPlanFor(entitlement, now);
+  const billingManaged = Boolean(entitlement?.stripe_customer_id);
   const row = await env.ROCKY_DB.prepare(
     `INSERT INTO usage_daily (user_id, usage_date, answer_count, updated_at)
      VALUES (?, ?, 1, ?)
@@ -162,6 +164,7 @@ export async function consumeIdentityAllowance(env, userId, now = new Date()) {
       access: {
         authenticated: true,
         ...access,
+        billingManaged,
         used: access.dailyLimit,
         remaining: 0
       }
@@ -174,6 +177,7 @@ export async function consumeIdentityAllowance(env, userId, now = new Date()) {
     access: {
       authenticated: true,
       ...access,
+      billingManaged,
       used,
       remaining: Math.max(0, access.dailyLimit - used)
     }
@@ -220,6 +224,7 @@ export async function identityStatus(request, env, resolveIdentity = authenticat
         enabled: identity.enabled,
         authenticated: false,
         plan: "guest",
+        billingManaged: false,
         dailyLimit: FREE_DAILY_LIMIT,
         used: 0,
         remaining: FREE_DAILY_LIMIT

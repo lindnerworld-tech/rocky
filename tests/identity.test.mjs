@@ -183,7 +183,8 @@ test("D1 gives an active Plus account twenty answers per day", async () => {
     plan: "plus",
     status: "active",
     source: "manual",
-    current_period_end: null
+    current_period_end: null,
+    stripe_customer_id: "cus_01rocky"
   });
 
   const decision = await consumeIdentityAllowance(
@@ -195,6 +196,7 @@ test("D1 gives an active Plus account twenty answers per day", async () => {
   assert.equal(decision.allowed, true);
   assert.equal(decision.access.dailyLimit, PLUS_DAILY_LIMIT);
   assert.equal(decision.access.remaining, PLUS_DAILY_LIMIT - 1);
+  assert.equal(decision.access.billingManaged, true);
 });
 
 test("D1 refunds an answer when the provider fails", async () => {

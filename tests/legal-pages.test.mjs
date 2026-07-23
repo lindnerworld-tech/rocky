@@ -55,6 +55,8 @@ test("pricing and refund pages disclose the approved plans and refund window", a
   assert.match(pricing, /20 AI-generated Rocky perspectives per day/);
   assert.match(refunds, /within 14 calendar days/);
   assert.match(refunds, /initial subscription purchase and to a renewal charge/);
+  assert.match(pricing, /Stripe's secure customer portal/);
+  assert.match(refunds, /Stripe's secure customer portal/);
 });
 
 test("privacy page discloses core Rocky processors without claiming card storage", async () => {
