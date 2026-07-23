@@ -20,8 +20,10 @@ signing secrets are not.
 ## Current safety state
 
 - Production payments: disabled with `ROCKY_PAYMENTS_ENABLED=false`
-- Staging payments: disabled until its webhook, encrypted secrets, and database
-  migration are ready
+- Staging payments: disabled until its database migration and end-to-end tests
+  are complete
+- Stripe sandbox webhook destination: active for five subscription events
+- Stripe sandbox API and webhook secrets: stored as encrypted staging secrets
 - Checkout: Stripe-hosted, Managed Payments enabled
 - Access: granted only from signed Stripe subscription webhooks
 - Duplicate webhook events: ignored
