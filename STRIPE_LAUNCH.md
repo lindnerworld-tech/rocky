@@ -20,6 +20,8 @@ signing secrets are not.
 ## Current safety state
 
 - Production payments: disabled with `ROCKY_PAYMENTS_ENABLED=false`
+- Production D1: Stripe entitlement migration applied; existing record preserved
+- Stripe live account: under review; live webhook and secrets remain pending
 - Staging payments: disabled again after successful end-to-end sandbox tests
 - Cloudflare staging build branch: `agent/stripe-staging-safe`
 - Stripe sandbox webhook destination: active for five subscription events
@@ -42,6 +44,16 @@ signing secrets are not.
 - Idempotency is enforced by unique event IDs and the automated duplicate-event
   test; a manual Dashboard replay was not required.
 - Staging was returned to `ROCKY_PAYMENTS_ENABLED=false` after testing.
+
+## Production preparation — 2026-07-23
+
+- Created a D1 recovery bookmark before changing production.
+- Applied `0003_stripe_entitlements.sql` manually to
+  `rocky-identity-production`.
+- Preserved the existing production entitlement record.
+- Verified all three Stripe entitlement columns and both subscription indexes.
+- Kept production payments disabled.
+- Paused live configuration while Stripe reviews the account for go-live.
 
 ## Four go-live gates
 
