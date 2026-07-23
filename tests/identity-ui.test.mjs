@@ -36,20 +36,15 @@ test("D1 migration stores no email address or raw Rocky question", async () => {
   assert.doesNotMatch(migration, /question/i);
 });
 
-test("homepage loads Paddle only when public payment configuration is ready", async () => {
+test("homepage does not expose the retired Paddle checkout", async () => {
   const html = await readFile(
     new URL("../WEBSITE/index.html", import.meta.url),
     "utf8"
   );
 
-  assert.match(html, /config\.payments\?\.enabled/);
-  assert.match(html, /cdn\.paddle\.com\/paddle\/v2\/paddle\.js/);
-  assert.match(html, /Paddle\.Environment\.set\("sandbox"\)/);
-  assert.match(html, /Paddle\.Checkout\.open/);
-  assert.match(html, /paddle-checkout-context/);
-  assert.match(html, /customData\.error === "already_plus"/);
-  assert.match(html, /setCheckoutButtonsDisabled\(true\)/);
-  assert.match(html, /checkout\.closed" && !checkoutCompleted/);
+  assert.doesNotMatch(html, /cdn\.paddle\.com/);
+  assert.doesNotMatch(html, /Paddle\.Checkout/);
+  assert.doesNotMatch(html, /paddle-checkout-context/);
   assert.doesNotMatch(html, /PADDLE_WEBHOOK_SECRET/);
   assert.doesNotMatch(html, /ROCKY_CHECKOUT_SECRET/);
 });
