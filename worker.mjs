@@ -5,6 +5,7 @@ import {
   identityStatus
 } from "./WEBSITE/functions/identity.js";
 import {
+  createStripeBillingPortal,
   createStripeCheckout,
   handleStripeWebhook,
   paymentsConfiguration
@@ -165,6 +166,11 @@ export default {
 
     if (url.pathname === "/create-checkout-session") {
       const result = await createStripeCheckout(request, env);
+      return jsonResponse(result.body, result.status, result.headers);
+    }
+
+    if (url.pathname === "/create-billing-portal-session") {
+      const result = await createStripeBillingPortal(request, env);
       return jsonResponse(result.body, result.status, result.headers);
     }
 

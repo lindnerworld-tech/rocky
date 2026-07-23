@@ -52,7 +52,10 @@ test("homepage uses server-created Stripe Checkout and exposes no secrets", asyn
   assert.doesNotMatch(html, /Paddle\.Checkout/);
   assert.doesNotMatch(html, /paddle-checkout-context/);
   assert.match(html, /fetch\("\/create-checkout-session"/);
+  assert.match(html, /fetch\("\/create-billing-portal-session"/);
   assert.match(html, /window\.location\.assign\(result\.checkoutUrl\)/);
+  assert.match(html, /window\.location\.assign\(result\.portalUrl\)/);
+  assert.match(html, /Manage subscription/);
   assert.match(html, /Choose annual · \$59\/year/);
   assert.match(html, /Monthly · \$7\.99/);
   assert.doesNotMatch(html, /STRIPE_SECRET_KEY/);

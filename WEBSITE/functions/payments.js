@@ -100,6 +100,18 @@ function checkoutUrlFromStripe(value) {
   return "";
 }
 
+function portalUrlFromStripe(value) {
+  try {
+    const url = new URL(value);
+    if (url.protocol === "https:" && url.hostname === "billing.stripe.com") {
+      return url.toString();
+    }
+  } catch {
+    // The caller converts this to a safe upstream error.
+  }
+  return "";
+}
+
 function unixSecondsToIso(value) {
   const seconds = Number(value);
   if (!Number.isFinite(seconds) || seconds <= 0) return null;
@@ -128,6 +140,22 @@ export function paymentsConfiguration(env) {
     provider: "stripe",
     checkout: "hosted"
   };
+}
+
+function stripeWebhookReady(env) {
+  return Boolean(
+    env.STRIPE_WEBHOOK_SECRET &&
+    env.STRIPE_MONTHLY_PRICE_ID &&
+    env.STRIPE_ANNUAL_PRICE_ID &&
+    env.ROCKY_DB
+  );
+}
+
+function stripePortalReady(env) {
+  return Boolean(
+    env.STRIPE_SECRET_KEY &&
+    env.ROCKY_DB
+  );
 }
 
 export async function verifyStripeSignature(
@@ -258,6 +286,92 @@ export async function createStripeCheckout(
     body: {
       checkoutUrl
     }
+  };
+}
+
+export async function createStripeBillingPortal(
+  request,
+  env,
+  fetchStripe = fetch,
+  resolveIdentity = authenticateRequestIdentity
+) {
+  if (request.method !== "POST") {
+    return {
+      status: 405,
+      body: { error: "method_not_allowed" },
+      headers: { Allow: "POST" }
+    };
+  }
+
+  if (!stripePortalReady(env)) {
+    return { status: 503, body: { error: "billing_not_configured" } };
+  }
+
+  const identity = await resolveIdentity(request, env);
+  if (!identity.authenticated) {
+    return { status: 401, body: { error: "sign_in_required" } };
+  }
+
+  let customer;
+  try {
+    customer = await env.ROCKY_DB.prepare(
+      `SELECT stripe_customer_id
+       FROM entitlements
+       WHERE user_id = ?`
+    ).bind(identity.userId).first();
+  } catch {
+    return { status: 503, body: { error: "identity_store_unavailable" } };
+  }
+
+  const customerId = stripeId(customer?.stripe_customer_id, "cus_");
+  if (!customerId) {
+    return { status: 404, body: { error: "billing_account_not_found" } };
+  }
+
+  let baseUrl;
+  try {
+    baseUrl = checkoutBaseUrl(request, env);
+  } catch {
+    return { status: 503, body: { error: "billing_not_configured" } };
+  }
+
+  const form = new URLSearchParams();
+  form.set("customer", customerId);
+  form.set("return_url", new URL("/", baseUrl).toString());
+
+  let response;
+  try {
+    response = await fetchStripe(
+      "https://api.stripe.com/v1/billing_portal/sessions",
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${env.STRIPE_SECRET_KEY}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Stripe-Version": STRIPE_API_VERSION
+        },
+        body: form.toString()
+      }
+    );
+  } catch {
+    return { status: 502, body: { error: "billing_portal_unavailable" } };
+  }
+
+  let session;
+  try {
+    session = await response.json();
+  } catch {
+    return { status: 502, body: { error: "billing_portal_unavailable" } };
+  }
+
+  const portalUrl = response.ok ? portalUrlFromStripe(session?.url) : "";
+  if (!portalUrl) {
+    return { status: 502, body: { error: "billing_portal_unavailable" } };
+  }
+
+  return {
+    status: 200,
+    body: { portalUrl }
   };
 }
 
@@ -412,7 +526,7 @@ export async function handleStripeWebhook(request, env, now = new Date()) {
       headers: { Allow: "POST" }
     };
   }
-  if (!paymentsConfiguration(env).ready) {
+  if (!stripeWebhookReady(env)) {
     return { status: 503, body: { error: "payments_not_configured" } };
   }
 
