@@ -30,7 +30,7 @@ test("legal pages identify the operator and provide reciprocal navigation", asyn
   const pages = await Promise.all(names.map(readPage));
 
   for (const [index, html] of pages.entries()) {
-    assert.match(html, /Waikahe Orchards LLC/);
+    assert.match(html, /Craig Lindner/);
     assert.match(html, /support@rockyaloha\.com/);
     assert.match(html, /href="\/pricing"/);
     assert.match(html, /href="\/terms"/);
@@ -60,7 +60,7 @@ test("pricing and refund pages disclose the approved plans and refund window", a
 test("privacy page discloses core Rocky processors without claiming card storage", async () => {
   const privacy = await readPage("privacy.html");
 
-  for (const provider of ["Cloudflare", "Clerk", "OpenAI", "Paddle"]) {
+  for (const provider of ["Cloudflare", "Clerk", "OpenAI", "Stripe"]) {
     assert.match(privacy, new RegExp(provider));
   }
   assert.match(privacy, /do not receive or store your full payment-card number/);
