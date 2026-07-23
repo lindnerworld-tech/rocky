@@ -22,6 +22,7 @@ signing secrets are not.
 - Production payments: disabled with `ROCKY_PAYMENTS_ENABLED=false`
 - Staging payments: disabled until its database migration and end-to-end tests
   are complete
+- Cloudflare staging build branch: `agent/stripe-staging-safe`
 - Stripe sandbox webhook destination: active for five subscription events
 - Stripe sandbox API and webhook secrets: stored as encrypted staging secrets
 - Checkout: Stripe-hosted, Managed Payments enabled
