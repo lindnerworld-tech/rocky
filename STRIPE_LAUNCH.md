@@ -20,8 +20,7 @@ signing secrets are not.
 ## Current safety state
 
 - Production payments: disabled with `ROCKY_PAYMENTS_ENABLED=false`
-- Staging payments: disabled until its database migration and end-to-end tests
-  are complete
+- Staging payments: disabled again after successful end-to-end sandbox tests
 - Cloudflare staging build branch: `agent/stripe-staging-safe`
 - Stripe sandbox webhook destination: active for five subscription events
 - Stripe sandbox API and webhook secrets: stored as encrypted staging secrets
@@ -29,6 +28,20 @@ signing secrets are not.
 - Access: granted only from signed Stripe subscription webhooks
 - Duplicate webhook events: ignored
 - Unknown prices and untrusted account metadata: rejected
+
+## Staging proof — 2026-07-23
+
+- Replaced the stale Paddle staging deployment with the current Stripe build.
+- Applied `0003_stripe_entitlements.sql` manually to
+  `rocky-identity-staging`; the existing entitlement record was preserved.
+- Monthly sandbox Checkout passed at $7.99 and granted Rocky Plus.
+- Immediate monthly cancellation passed and returned the account to Rocky Free.
+- Annual sandbox Checkout passed at $59 and granted Rocky Plus.
+- D1 recorded the correct Stripe subscription, customer, and approved Price IDs.
+- Signed subscription webhook deliveries were processed successfully.
+- Idempotency is enforced by unique event IDs and the automated duplicate-event
+  test; a manual Dashboard replay was not required.
+- Staging was returned to `ROCKY_PAYMENTS_ENABLED=false` after testing.
 
 ## Four go-live gates
 
