@@ -359,6 +359,59 @@
       font-weight: 800;
     }
 
+    .plus-offer {
+      margin-top: 22px;
+      padding: 18px;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 18px;
+      background: rgba(255,255,255,.08);
+    }
+
+    .plus-offer[hidden] { display: none; }
+
+    .plus-offer strong {
+      display: block;
+      color: #ffe7c4;
+      font-size: 1.02rem;
+    }
+
+    .plus-offer p {
+      margin: 5px 0 14px;
+      color: rgba(255,255,255,.72);
+      font-size: .88rem;
+    }
+
+    .plus-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+    }
+
+    .plus-button {
+      min-height: 42px;
+      padding: 0 15px;
+      border: 1px solid rgba(255,255,255,.22);
+      border-radius: 999px;
+      cursor: pointer;
+      color: var(--white);
+      background: rgba(255,255,255,.09);
+      font-weight: 850;
+    }
+
+    .plus-button-primary {
+      border-color: transparent;
+      color: #192126;
+      background: linear-gradient(135deg, #ffcf88, var(--sunrise));
+    }
+
+    .plus-button:disabled { cursor: wait; opacity: .65; }
+
+    .plus-status {
+      min-height: 1.3em;
+      margin: 11px 0 0;
+      color: rgba(255,255,255,.72);
+      font-size: .8rem;
+    }
 
     .ask-card {
       padding: clamp(24px, 4vw, 40px);
@@ -585,6 +638,15 @@
           <h2>Ask Rocky.</h2>
           <p>Bring the question that has been rattling around in your head. Rocky will answer briefly—because four billion years teaches you not to ramble.</p>
           <div class="counter" id="accessCounter">Questions asked on this device: <span id="rockyCounter">0</span></div>
+          <div class="plus-offer" id="plusOffer" hidden>
+            <strong>More perspective, when you need it.</strong>
+            <p>Rocky Plus includes up to 20 answers per day. Annual is the best value.</p>
+            <div class="plus-actions">
+              <button class="plus-button plus-button-primary" id="annualCheckoutButton" type="button">Choose annual · $59/year</button>
+              <button class="plus-button" id="monthlyCheckoutButton" type="button">Monthly · $7.99</button>
+            </div>
+            <p class="plus-status" id="plusStatus" aria-live="polite"></p>
+          </div>
         </div>
 
         <div class="ask-card">
@@ -652,6 +714,8 @@
     let rockyConfigPromise = null;
     let identityReady = false;
     let userButtonMounted = false;
+    let paymentsReady = false;
+    let checkoutSyncStarted = false;
 
     function loadRockyConfig() {
       if (!rockyConfigPromise) {
@@ -694,11 +758,19 @@
       if (!access) return;
 
       const counter = document.getElementById("accessCounter");
+      const plusOffer = document.getElementById("plusOffer");
       if (access.authenticated) {
-        counter.textContent = `Rocky Free: ${access.remaining} of ${access.dailyLimit} answers left today`;
+        const planName = access.plan === "plus" ? "Rocky Plus" : "Rocky Free";
+        counter.textContent = `${planName}: ${access.remaining} of ${access.dailyLimit} answers left today`;
       } else {
         counter.textContent = `Daily guest answer: ${access.remaining} of ${access.dailyLimit} left`;
       }
+
+      plusOffer.hidden = !(
+        paymentsReady &&
+        access.authenticated &&
+        access.plan !== "plus"
+      );
     }
 
     async function sessionToken() {
@@ -723,6 +795,109 @@
       return access;
     }
 
+    function setCheckoutButtonsDisabled(disabled) {
+      document.getElementById("annualCheckoutButton").disabled = disabled;
+      document.getElementById("monthlyCheckoutButton").disabled = disabled;
+    }
+
+    function clearCheckoutResult() {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("checkout");
+      window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+    }
+
+    async function refreshAfterCheckout() {
+      if (checkoutSyncStarted) return;
+      checkoutSyncStarted = true;
+
+      const status = document.getElementById("plusStatus");
+      setCheckoutButtonsDisabled(true);
+      status.textContent = "Payment received. Rocky Plus is syncing...";
+
+      for (let attempt = 0; attempt < 15; attempt += 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const access = await refreshIdentityAccess();
+        if (access?.plan === "plus") {
+          clearCheckoutResult();
+          return;
+        }
+      }
+
+      status.textContent = "Payment received. Refresh shortly if Rocky Plus is still syncing.";
+      setCheckoutButtonsDisabled(false);
+      clearCheckoutResult();
+    }
+
+    async function openPlusCheckout(plan) {
+      const status = document.getElementById("plusStatus");
+      if (!paymentsReady) {
+        status.textContent = "Checkout is not ready yet.";
+        return;
+      }
+      if (!window.Clerk?.isSignedIn) {
+        window.Clerk?.openSignIn();
+        return;
+      }
+
+      setCheckoutButtonsDisabled(true);
+      status.textContent = "Opening secure checkout...";
+      let redirecting = false;
+
+      try {
+        const token = await sessionToken();
+        const response = await fetch("/create-checkout-session", {
+          method: "POST",
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ plan })
+        });
+        const result = await response.json();
+
+        if (response.status === 409 && result.error === "already_plus") {
+          await refreshIdentityAccess();
+          status.textContent = "Rocky Plus is already active.";
+          return;
+        }
+        if (!response.ok || !result.checkoutUrl) {
+          throw new Error("Checkout unavailable");
+        }
+
+        redirecting = true;
+        window.location.assign(result.checkoutUrl);
+      } catch {
+        status.textContent = "Checkout needs a moment. Please try again.";
+      } finally {
+        if (!redirecting) setCheckoutButtonsDisabled(false);
+      }
+    }
+
+    async function initializePayments() {
+      try {
+        const config = await loadRockyConfig();
+        paymentsReady = Boolean(
+          config.payments?.enabled &&
+          config.payments?.ready &&
+          config.payments?.provider === "stripe"
+        );
+        if (!paymentsReady) return;
+
+        const access = await refreshIdentityAccess();
+        const checkoutResult = new URLSearchParams(window.location.search).get("checkout");
+        if (checkoutResult === "success" && access?.authenticated) {
+          refreshAfterCheckout();
+        } else if (checkoutResult === "canceled") {
+          const status = document.getElementById("plusStatus");
+          status.textContent = "Checkout canceled. No charge was made.";
+          clearCheckoutResult();
+        }
+      } catch {
+        paymentsReady = false;
+      }
+    }
+
     async function renderIdentity() {
       const button = document.getElementById("identityButton");
       const userButton = document.getElementById("identityUserButton");
@@ -745,7 +920,15 @@
         button.textContent = "Sign in";
       }
 
-      await refreshIdentityAccess();
+      const access = await refreshIdentityAccess();
+      const checkoutResult = new URLSearchParams(window.location.search).get("checkout");
+      if (
+        paymentsReady &&
+        checkoutResult === "success" &&
+        access?.authenticated
+      ) {
+        refreshAfterCheckout();
+      }
     }
 
     async function initializeIdentity() {
@@ -898,8 +1081,11 @@
     window.addEventListener("load", () => {
       initializeTurnstile();
       initializeIdentity();
+      initializePayments();
     });
     document.getElementById("askButton").addEventListener("click", askRocky);
+    document.getElementById("annualCheckoutButton").addEventListener("click", () => openPlusCheckout("annual"));
+    document.getElementById("monthlyCheckoutButton").addEventListener("click", () => openPlusCheckout("monthly"));
     document.getElementById("rockyQuestion").addEventListener("keydown", event => {
       if ((event.ctrlKey || event.metaKey) && event.key === "Enter") askRocky();
     });

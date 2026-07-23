@@ -1,0 +1,65 @@
+# Project Rocky Stripe launch
+
+Rocky uses Stripe-hosted Checkout with Managed Payments. The browser sends only
+`monthly` or `annual`; the Worker maps that choice to an approved Stripe Price
+ID and creates the Checkout Session on the server.
+
+## Live catalog
+
+- Monthly — $7.99 USD: `price_1TwEBR9yakPvhQdpkVD7vDlk`
+- Annual — $59.00 USD: `price_1TwDzA9yakPvhQdpamdErN02`
+
+These identifiers are safe to store in source. Stripe secret keys and webhook
+signing secrets are not.
+
+## Current safety state
+
+- Production payments: disabled with `ROCKY_PAYMENTS_ENABLED=false`
+- Staging payments: disabled until separate Stripe sandbox prices exist
+- Checkout: Stripe-hosted, Managed Payments enabled
+- Access: granted only from signed Stripe subscription webhooks
+- Duplicate webhook events: ignored
+- Unknown prices and untrusted account metadata: rejected
+
+## Four go-live gates
+
+1. **Stripe ready**
+   - Activate Managed Payments and accept its terms in the live Dashboard.
+   - Confirm both live products remain marked eligible for Managed Payments.
+   - Create matching monthly and annual products in the Stripe sandbox.
+
+2. **Cloudflare ready**
+   - Apply D1 migration `0003_stripe_entitlements.sql` to staging, then
+     production.
+   - Add `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` as encrypted Worker
+     secrets. Never place either value in GitHub, source code, or chat.
+   - Add the sandbox Price IDs to the staging Worker as
+     `STRIPE_MONTHLY_PRICE_ID` and `STRIPE_ANNUAL_PRICE_ID`.
+
+3. **Webhook ready**
+   - In Stripe, create a live webhook endpoint:
+     `https://www.rockyaloha.com/stripe-webhook`
+   - Subscribe it to:
+     - `customer.subscription.created`
+     - `customer.subscription.updated`
+     - `customer.subscription.deleted`
+     - `customer.subscription.paused`
+     - `customer.subscription.resumed`
+   - Use API version `2025-03-31.basil` or later.
+   - Create an equivalent webhook endpoint for the staging Worker in sandbox.
+
+4. **End-to-end proof**
+   - Enable payments in staging only.
+   - Complete one monthly and one annual sandbox Checkout.
+   - Confirm each signed-in account changes from Rocky Free to Rocky Plus.
+   - Cancel one sandbox subscription and confirm access returns to Rocky Free.
+   - Confirm repeated delivery of the same Stripe event does not change access
+     twice.
+
+After all four gates pass, change production
+`ROCKY_PAYMENTS_ENABLED` to `true` in a separate, reviewable go-live commit.
+
+## Emergency stop
+
+Set `ROCKY_PAYMENTS_ENABLED=false` and redeploy. This stops new Checkout
+Sessions. Stripe continues to retain subscription and payment records.

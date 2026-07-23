@@ -22,11 +22,10 @@ export function healthState(env) {
   );
   const paymentsEnabled = env.ROCKY_PAYMENTS_ENABLED === "true";
   const paymentsReady = !paymentsEnabled || Boolean(
-    env.PADDLE_CLIENT_TOKEN &&
-    env.PADDLE_MONTHLY_PRICE_ID &&
-    env.PADDLE_ANNUAL_PRICE_ID &&
-    env.PADDLE_WEBHOOK_SECRET &&
-    env.ROCKY_CHECKOUT_SECRET &&
+    env.STRIPE_SECRET_KEY &&
+    env.STRIPE_MONTHLY_PRICE_ID &&
+    env.STRIPE_ANNUAL_PRICE_ID &&
+    env.STRIPE_WEBHOOK_SECRET &&
     env.ROCKY_DB
   );
   const ready = Boolean(

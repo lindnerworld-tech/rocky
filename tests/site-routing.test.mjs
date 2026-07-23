@@ -63,11 +63,10 @@ test("health fails closed when enabled payments are incomplete", () => {
     TURNSTILE_SITE_KEY: "configured",
     TURNSTILE_SECRET_KEY: "configured",
     ROCKY_PAYMENTS_ENABLED: "true",
-    PADDLE_CLIENT_TOKEN: "test_public",
-    PADDLE_MONTHLY_PRICE_ID: "pri_month",
-    PADDLE_ANNUAL_PRICE_ID: "pri_year",
-    PADDLE_WEBHOOK_SECRET: "secret",
-    ROCKY_CHECKOUT_SECRET: "checkout-secret",
+    STRIPE_SECRET_KEY: "sk_test_not-real",
+    STRIPE_MONTHLY_PRICE_ID: "price_month",
+    STRIPE_ANNUAL_PRICE_ID: "price_year",
+    STRIPE_WEBHOOK_SECRET: "whsec_not-real",
     ROCKY_DB: {}
   });
 
