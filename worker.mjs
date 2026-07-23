@@ -5,8 +5,8 @@ import {
   identityStatus
 } from "./WEBSITE/functions/identity.js";
 import {
-  checkoutContext,
-  handlePaddleWebhook,
+  createStripeCheckout,
+  handleStripeWebhook,
   paymentsConfiguration
 } from "./WEBSITE/functions/payments.js";
 import {
@@ -163,21 +163,13 @@ export default {
       return jsonResponse(result.body, result.status);
     }
 
-    if (url.pathname === "/paddle-checkout-context") {
-      if (request.method !== "GET") {
-        return jsonResponse(
-          { error: "method_not_allowed" },
-          405,
-          { Allow: "GET" }
-        );
-      }
-
-      const result = await checkoutContext(request, env);
-      return jsonResponse(result.body, result.status);
+    if (url.pathname === "/create-checkout-session") {
+      const result = await createStripeCheckout(request, env);
+      return jsonResponse(result.body, result.status, result.headers);
     }
 
-    if (url.pathname === "/paddle-webhook") {
-      const result = await handlePaddleWebhook(request, env);
+    if (url.pathname === "/stripe-webhook") {
+      const result = await handleStripeWebhook(request, env);
       return jsonResponse(result.body, result.status, result.headers);
     }
 

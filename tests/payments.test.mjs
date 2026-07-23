@@ -2,12 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
-  checkoutContext,
-  createCheckoutContext,
-  handlePaddleWebhook,
+  createStripeCheckout,
+  handleStripeWebhook,
   paymentsConfiguration,
-  processPaddleEvent,
-  verifyPaddleSignature
+  processStripeEvent,
+  verifyStripeSignature
 } from "../WEBSITE/functions/payments.js";
 
 class FakeStatement {
@@ -27,7 +26,7 @@ class FakeStatement {
       const event = this.db.events.get(this.params[0]);
       return event ? { processed_at: event.processedAt } : null;
     }
-    if (this.sql.includes("WHERE paddle_subscription_id = ?")) {
+    if (this.sql.includes("WHERE stripe_subscription_id = ?")) {
       for (const [userId, entitlement] of this.db.entitlements) {
         if (entitlement.subscriptionId === this.params[0]) {
           return { user_id: userId };
@@ -122,16 +121,15 @@ function makeEnv(db = new FakeD1()) {
   return {
     ROCKY_DB: db,
     ROCKY_PAYMENTS_ENABLED: "true",
-    PADDLE_ENVIRONMENT: "sandbox",
-    PADDLE_CLIENT_TOKEN: "test_public",
-    PADDLE_MONTHLY_PRICE_ID: "pri_month",
-    PADDLE_ANNUAL_PRICE_ID: "pri_year",
-    PADDLE_WEBHOOK_SECRET: "webhook-secret",
-    ROCKY_CHECKOUT_SECRET: "checkout-secret"
+    ROCKY_SITE_URL: "https://www.rockyaloha.com",
+    STRIPE_SECRET_KEY: "sk_test_not-a-real-key",
+    STRIPE_MONTHLY_PRICE_ID: "price_month",
+    STRIPE_ANNUAL_PRICE_ID: "price_year",
+    STRIPE_WEBHOOK_SECRET: "whsec_test-secret"
   };
 }
 
-async function paddleSignature(secret, timestamp, rawBody) {
+async function stripeSignature(secret, timestamp, rawBody) {
   const key = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(secret),
@@ -142,124 +140,207 @@ async function paddleSignature(secret, timestamp, rawBody) {
   const signature = await crypto.subtle.sign(
     "HMAC",
     key,
-    new TextEncoder().encode(`${timestamp}:${rawBody}`)
+    new TextEncoder().encode(`${timestamp}.${rawBody}`)
   );
   const hex = Array.from(new Uint8Array(signature), byte =>
     byte.toString(16).padStart(2, "0")
   ).join("");
-  return `ts=${timestamp};h1=${hex}`;
+  return `t=${timestamp},v1=${hex}`;
 }
 
-async function subscriptionEvent({
+function subscriptionEvent({
   eventId = "evt_01test",
-  eventType = "subscription.created",
+  eventType = "customer.subscription.created",
   status = "active",
-  occurredAt = "2026-07-17T12:00:00.000Z",
-  priceId = "pri_month",
-  secret = "checkout-secret",
-  userId = "user_rocky"
+  created = Date.parse("2026-07-17T12:00:00.000Z") / 1000,
+  priceId = "price_month",
+  userId = "user_rocky",
+  includeMetadata = true
 } = {}) {
   return {
-    event_id: eventId,
-    event_type: eventType,
-    occurred_at: occurredAt,
+    id: eventId,
+    type: eventType,
+    created,
     data: {
-      id: "sub_01rocky",
-      customer_id: "ctm_01rocky",
-      status,
-      current_billing_period: {
-        ends_at: "2026-08-17T12:00:00.000Z"
-      },
-      items: [{ price: { id: priceId } }],
-      custom_data: await createCheckoutContext(userId, secret)
+      object: {
+        id: "sub_01rocky",
+        customer: "cus_01rocky",
+        status,
+        metadata: includeMetadata ? { rocky_user_id: userId } : {},
+        items: {
+          data: [{
+            current_period_end:
+              Date.parse("2026-08-17T12:00:00.000Z") / 1000,
+            price: { id: priceId }
+          }]
+        }
+      }
     }
   };
 }
 
-test("payments configuration exposes only public checkout values", () => {
+test("payments configuration exposes status but no Stripe secrets or price IDs", () => {
   const config = paymentsConfiguration(makeEnv());
   assert.deepEqual(config, {
     enabled: true,
     ready: true,
-    environment: "sandbox",
-    clientToken: "test_public",
-    monthlyPriceId: "pri_month",
-    annualPriceId: "pri_year"
+    provider: "stripe",
+    checkout: "hosted"
   });
+  assert.equal("secretKey" in config, false);
   assert.equal("webhookSecret" in config, false);
+  assert.equal("monthlyPriceId" in config, false);
 
   const incomplete = makeEnv();
-  delete incomplete.ROCKY_CHECKOUT_SECRET;
+  delete incomplete.STRIPE_WEBHOOK_SECRET;
   assert.equal(paymentsConfiguration(incomplete).ready, false);
 });
 
-test("Paddle signature verification rejects changed and stale payloads", async () => {
-  const rawBody = JSON.stringify({ event_id: "evt_01test" });
+test("Stripe signature verification rejects changed and stale payloads", async () => {
+  const rawBody = JSON.stringify({ id: "evt_01test" });
   const now = new Date("2026-07-17T12:00:00.000Z");
   const timestamp = Math.floor(now.getTime() / 1000);
-  const header = await paddleSignature("webhook-secret", timestamp, rawBody);
+  const header = await stripeSignature("whsec_test-secret", timestamp, rawBody);
 
   assert.equal(
-    await verifyPaddleSignature(rawBody, header, "webhook-secret", now),
+    await verifyStripeSignature(rawBody, header, "whsec_test-secret", now),
     true
   );
   assert.equal(
-    await verifyPaddleSignature(`${rawBody} `, header, "webhook-secret", now),
+    await verifyStripeSignature(
+      `${rawBody} `,
+      header,
+      "whsec_test-secret",
+      now
+    ),
     false
   );
   assert.equal(
-    await verifyPaddleSignature(
+    await verifyStripeSignature(
       rawBody,
       header,
-      "webhook-secret",
+      "whsec_test-secret",
       new Date("2026-07-17T12:10:00.000Z")
     ),
     false
   );
 });
 
-test("checkout context requires a signed-in Rocky account", async () => {
-  const env = makeEnv();
-  const request = new Request("https://rocky.test/paddle-checkout-context");
-  const signedOut = await checkoutContext(request, env, async () => ({
-    authenticated: false
-  }));
-
-  assert.equal(signedOut.status, 401);
-
-  const eligible = await checkoutContext(
+test("checkout requires a signed-in Rocky account", async () => {
+  const request = new Request("https://www.rockyaloha.com/create-checkout-session", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ plan: "monthly" })
+  });
+  const result = await createStripeCheckout(
     request,
-    env,
+    makeEnv(),
+    async () => {
+      throw new Error("Stripe must not be called");
+    },
+    async () => ({ authenticated: false })
+  );
+
+  assert.equal(result.status, 401);
+  assert.deepEqual(result.body, { error: "sign_in_required" });
+});
+
+test("checkout maps an approved plan to a server-side Stripe price", async () => {
+  let stripeRequest;
+  const request = new Request("https://www.rockyaloha.com/create-checkout-session", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      plan: "monthly",
+      priceId: "price_attacker_controlled"
+    })
+  });
+  const result = await createStripeCheckout(
+    request,
+    makeEnv(),
+    async (url, init) => {
+      stripeRequest = { url, init };
+      return new Response(JSON.stringify({
+        id: "cs_test_rocky",
+        url: "https://checkout.stripe.com/c/pay/cs_test_rocky"
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      });
+    },
     async () => ({ authenticated: true, userId: "user_rocky" }),
     async () => ({ plan: "free" })
   );
 
-  assert.equal(eligible.status, 200);
-  assert.equal(eligible.body.clerk_user_id, "user_rocky");
-  assert.match(eligible.body.rocky_checkout_signature, /^[a-f0-9]{64}$/);
+  assert.equal(result.status, 200);
+  assert.equal(
+    result.body.checkoutUrl,
+    "https://checkout.stripe.com/c/pay/cs_test_rocky"
+  );
+  assert.equal(stripeRequest.url, "https://api.stripe.com/v1/checkout/sessions");
+  assert.equal(stripeRequest.init.headers.Authorization, "Bearer sk_test_not-a-real-key");
+  assert.equal(stripeRequest.init.headers["Stripe-Version"], "2025-03-31.basil");
+
+  const form = new URLSearchParams(stripeRequest.init.body);
+  assert.equal(form.get("line_items[0][price]"), "price_month");
+  assert.equal(form.get("line_items[0][quantity]"), "1");
+  assert.equal(form.get("managed_payments[enabled]"), "true");
+  assert.equal(form.get("mode"), "subscription");
+  assert.equal(form.get("client_reference_id"), "user_rocky");
+  assert.equal(
+    form.get("subscription_data[metadata][rocky_user_id]"),
+    "user_rocky"
+  );
+  assert.equal(
+    form.get("success_url"),
+    "https://www.rockyaloha.com/?checkout=success"
+  );
+  assert.equal(
+    form.get("cancel_url"),
+    "https://www.rockyaloha.com/?checkout=canceled"
+  );
+  assert.equal(stripeRequest.init.body.includes("price_attacker_controlled"), false);
 });
 
-test("checkout context rejects an account that already has Plus", async () => {
-  const env = makeEnv();
-  const request = new Request("https://rocky.test/paddle-checkout-context");
-  const result = await checkoutContext(
-    request,
-    env,
+test("checkout rejects unknown plans and existing Plus accounts", async () => {
+  const unknownPlan = await createStripeCheckout(
+    new Request("https://www.rockyaloha.com/create-checkout-session", {
+      method: "POST",
+      body: JSON.stringify({ plan: "lifetime" })
+    }),
+    makeEnv(),
+    async () => {
+      throw new Error("Stripe must not be called");
+    },
+    async () => ({ authenticated: true, userId: "user_rocky" }),
+    async () => ({ plan: "free" })
+  );
+  assert.equal(unknownPlan.status, 400);
+  assert.deepEqual(unknownPlan.body, { error: "invalid_plan" });
+
+  const alreadyPlus = await createStripeCheckout(
+    new Request("https://www.rockyaloha.com/create-checkout-session", {
+      method: "POST",
+      body: JSON.stringify({ plan: "annual" })
+    }),
+    makeEnv(),
+    async () => {
+      throw new Error("Stripe must not be called");
+    },
     async () => ({ authenticated: true, userId: "user_rocky" }),
     async () => ({ plan: "plus" })
   );
-
-  assert.equal(result.status, 409);
-  assert.deepEqual(result.body, { error: "already_plus" });
+  assert.equal(alreadyPlus.status, 409);
+  assert.deepEqual(alreadyPlus.body, { error: "already_plus" });
 });
 
 test("verified subscription events grant Plus and are idempotent", async () => {
   const db = new FakeD1();
   const env = makeEnv(db);
-  const event = await subscriptionEvent();
+  const event = subscriptionEvent();
 
-  const first = await processPaddleEvent(env, event);
-  const second = await processPaddleEvent(env, event);
+  const first = await processStripeEvent(env, event);
+  const second = await processStripeEvent(env, event);
 
   assert.equal(first.updated, true);
   assert.equal(second.duplicate, true);
@@ -270,58 +351,48 @@ test("verified subscription events grant Plus and are idempotent", async () => {
     createdAt: db.entitlements.get("user_rocky").createdAt,
     updatedAt: db.entitlements.get("user_rocky").updatedAt,
     subscriptionId: "sub_01rocky",
-    customerId: "ctm_01rocky",
-    priceId: "pri_month",
+    customerId: "cus_01rocky",
+    priceId: "price_month",
     lastEventAt: "2026-07-17T12:00:00.000Z"
   });
 });
 
-test("stored subscription identity survives webhook and checkout-secret rotation", async () => {
+test("stored subscription identity survives missing webhook metadata", async () => {
   const db = new FakeD1();
   const env = makeEnv(db);
-  const created = await subscriptionEvent();
-  await processPaddleEvent(env, created);
+  await processStripeEvent(env, subscriptionEvent());
 
-  env.PADDLE_WEBHOOK_SECRET = "rotated-webhook-secret";
-  env.ROCKY_CHECKOUT_SECRET = "rotated-checkout-secret";
-  const now = new Date("2026-07-18T12:00:00.000Z");
-  const canceled = await subscriptionEvent({
+  const canceled = subscriptionEvent({
     eventId: "evt_02canceled",
-    eventType: "subscription.canceled",
+    eventType: "customer.subscription.deleted",
     status: "canceled",
-    occurredAt: "2026-07-18T12:00:00.000Z"
+    created: Date.parse("2026-07-18T12:00:00.000Z") / 1000,
+    includeMetadata: false
   });
-  canceled.data.current_billing_period = null;
-  const rawBody = JSON.stringify(canceled);
-  const timestamp = Math.floor(now.getTime() / 1000);
-  const signature = await paddleSignature(
-    env.PADDLE_WEBHOOK_SECRET,
-    timestamp,
-    rawBody
-  );
-  const request = new Request("https://rocky.test/paddle-webhook", {
-    method: "POST",
-    headers: { "Paddle-Signature": signature },
-    body: rawBody
-  });
+  canceled.data.object.items.data[0].current_period_end = null;
 
-  const response = await handlePaddleWebhook(request, env, now);
+  const result = await processStripeEvent(env, canceled);
 
-  assert.equal(response.status, 200);
-  assert.equal(response.body.updated, true);
-  assert.equal(response.body.userId, "user_rocky");
+  assert.equal(result.updated, true);
+  assert.equal(result.userId, "user_rocky");
   assert.equal(db.entitlements.get("user_rocky").status, "canceled");
+  assert.equal(db.entitlements.get("user_rocky").currentPeriodEnd, null);
 });
 
-test("events with an untrusted checkout identity do not grant Plus", async () => {
+test("events with an untrusted identity or price do not grant Plus", async () => {
   const db = new FakeD1();
   const env = makeEnv(db);
-  const event = await subscriptionEvent();
-  event.data.custom_data.rocky_checkout_signature = "0".repeat(64);
+  const untrustedIdentity = subscriptionEvent({ userId: "not-a-clerk-user" });
+  const untrustedPrice = subscriptionEvent({
+    eventId: "evt_02wrongprice",
+    priceId: "price_not_rocky"
+  });
 
-  const result = await processPaddleEvent(env, event);
+  const identityResult = await processStripeEvent(env, untrustedIdentity);
+  const priceResult = await processStripeEvent(env, untrustedPrice);
 
-  assert.equal(result.updated, false);
+  assert.equal(identityResult.updated, false);
+  assert.equal(priceResult.updated, false);
   assert.equal(db.entitlements.size, 0);
 });
 
@@ -329,24 +400,24 @@ test("webhook handler verifies the raw body before updating entitlements", async
   const db = new FakeD1();
   const env = makeEnv(db);
   const now = new Date("2026-07-17T12:00:00.000Z");
-  const event = await subscriptionEvent();
+  const event = subscriptionEvent();
   const rawBody = JSON.stringify(event);
   const timestamp = Math.floor(now.getTime() / 1000);
-  const signature = await paddleSignature(
-    env.PADDLE_WEBHOOK_SECRET,
+  const signature = await stripeSignature(
+    env.STRIPE_WEBHOOK_SECRET,
     timestamp,
     rawBody
   );
-  const request = new Request("https://rocky.test/paddle-webhook", {
+  const request = new Request("https://www.rockyaloha.com/stripe-webhook", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Paddle-Signature": signature
+      "Stripe-Signature": signature
     },
     body: rawBody
   });
 
-  const response = await handlePaddleWebhook(request, env, now);
+  const response = await handleStripeWebhook(request, env, now);
 
   assert.equal(response.status, 200);
   assert.equal(response.body.updated, true);

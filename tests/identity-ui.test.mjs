@@ -25,6 +25,10 @@ test("D1 migration stores no email address or raw Rocky question", async () => {
     readFile(
       new URL("../migrations/0002_paddle_entitlements.sql", import.meta.url),
       "utf8"
+    ),
+    readFile(
+      new URL("../migrations/0003_stripe_entitlements.sql", import.meta.url),
+      "utf8"
     )
   ]);
   const migration = migrations.join("\n");
@@ -32,11 +36,13 @@ test("D1 migration stores no email address or raw Rocky question", async () => {
   assert.match(migration, /CREATE TABLE IF NOT EXISTS users/);
   assert.match(migration, /CREATE TABLE IF NOT EXISTS entitlements/);
   assert.match(migration, /CREATE TABLE IF NOT EXISTS usage_daily/);
+  assert.match(migration, /stripe_subscription_id/);
+  assert.match(migration, /'stripe'/);
   assert.doesNotMatch(migration, /email/i);
   assert.doesNotMatch(migration, /question/i);
 });
 
-test("homepage does not expose the retired Paddle checkout", async () => {
+test("homepage uses server-created Stripe Checkout and exposes no secrets", async () => {
   const html = await readFile(
     new URL("../WEBSITE/index.html", import.meta.url),
     "utf8"
@@ -45,6 +51,25 @@ test("homepage does not expose the retired Paddle checkout", async () => {
   assert.doesNotMatch(html, /cdn\.paddle\.com/);
   assert.doesNotMatch(html, /Paddle\.Checkout/);
   assert.doesNotMatch(html, /paddle-checkout-context/);
+  assert.match(html, /fetch\("\/create-checkout-session"/);
+  assert.match(html, /window\.location\.assign\(result\.checkoutUrl\)/);
+  assert.match(html, /Choose annual · \$59\/year/);
+  assert.match(html, /Monthly · \$7\.99/);
+  assert.doesNotMatch(html, /STRIPE_SECRET_KEY/);
+  assert.doesNotMatch(html, /STRIPE_WEBHOOK_SECRET/);
   assert.doesNotMatch(html, /PADDLE_WEBHOOK_SECRET/);
   assert.doesNotMatch(html, /ROCKY_CHECKOUT_SECRET/);
+});
+
+test("production keeps charging off while retaining the approved Stripe prices", async () => {
+  const config = await readFile(
+    new URL("../wrangler.jsonc", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(config, /"ROCKY_PAYMENTS_ENABLED": "false"/);
+  assert.match(config, /price_1TwEBR9yakPvhQdpkVD7vDlk/);
+  assert.match(config, /price_1TwDzA9yakPvhQdpamdErN02/);
+  assert.doesNotMatch(config, /STRIPE_SECRET_KEY/);
+  assert.doesNotMatch(config, /STRIPE_WEBHOOK_SECRET/);
 });
