@@ -9,13 +9,19 @@ ID and creates the Checkout Session on the server.
 - Monthly — $7.99 USD: `price_1TwEBR9yakPvhQdpkVD7vDlk`
 - Annual — $59.00 USD: `price_1TwDzA9yakPvhQdpamdErN02`
 
+## Sandbox catalog
+
+- Monthly — $7.99 USD: `price_1TwEy7QAn31d66ev8DGXt8Mo`
+- Annual — $59.00 USD: `price_1TwF0sQAn31d66evWfDKeRUL`
+
 These identifiers are safe to store in source. Stripe secret keys and webhook
 signing secrets are not.
 
 ## Current safety state
 
 - Production payments: disabled with `ROCKY_PAYMENTS_ENABLED=false`
-- Staging payments: disabled until separate Stripe sandbox prices exist
+- Staging payments: disabled until its webhook, encrypted secrets, and database
+  migration are ready
 - Checkout: Stripe-hosted, Managed Payments enabled
 - Access: granted only from signed Stripe subscription webhooks
 - Duplicate webhook events: ignored
@@ -26,15 +32,14 @@ signing secrets are not.
 1. **Stripe ready**
    - Activate Managed Payments and accept its terms in the live Dashboard.
    - Confirm both live products remain marked eligible for Managed Payments.
-   - Create matching monthly and annual products in the Stripe sandbox.
+   - Matching monthly and annual Stripe sandbox products are created.
 
 2. **Cloudflare ready**
    - Apply D1 migration `0003_stripe_entitlements.sql` to staging, then
      production.
    - Add `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` as encrypted Worker
      secrets. Never place either value in GitHub, source code, or chat.
-   - Add the sandbox Price IDs to the staging Worker as
-     `STRIPE_MONTHLY_PRICE_ID` and `STRIPE_ANNUAL_PRICE_ID`.
+   - Sandbox Price IDs are declared in the staging Worker configuration.
 
 3. **Webhook ready**
    - In Stripe, create a live webhook endpoint:
