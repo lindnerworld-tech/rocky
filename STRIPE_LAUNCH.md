@@ -27,6 +27,8 @@ signing secrets are not.
 - Stripe sandbox webhook destination: active for five subscription events
 - Stripe sandbox API and webhook secrets: stored as encrypted staging secrets
 - Checkout: Stripe-hosted, Managed Payments enabled
+- Billing management: authenticated Stripe-hosted customer portal
+- Cancellation webhooks: continue processing when new checkout is disabled
 - Access: granted only from signed Stripe subscription webhooks
 - Duplicate webhook events: ignored
 - Unknown prices and untrusted account metadata: rejected
@@ -43,6 +45,9 @@ signing secrets are not.
 - Signed subscription webhook deliveries were processed successfully.
 - Idempotency is enforced by unique event IDs and the automated duplicate-event
   test; a manual Dashboard replay was not required.
+- Stripe customer portal opened successfully with the correct sandbox billing history.
+- The canceled annual sandbox account returned to Rocky Free.
+- The full suite passes 43 tests, including cancellation delivery while checkout is disabled.
 - Staging was returned to `ROCKY_PAYMENTS_ENABLED=false` after testing.
 
 ## Production preparation — 2026-07-23
