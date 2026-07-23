@@ -29,6 +29,10 @@ test("D1 migration stores no email address or raw Rocky question", async () => {
     readFile(
       new URL("../migrations/0003_stripe_entitlements.sql", import.meta.url),
       "utf8"
+    ),
+    readFile(
+      new URL("../migrations/0004_remove_paddle_schema.sql", import.meta.url),
+      "utf8"
     )
   ]);
   const migration = migrations.join("\n");
@@ -40,6 +44,21 @@ test("D1 migration stores no email address or raw Rocky question", async () => {
   assert.match(migration, /'stripe'/);
   assert.doesNotMatch(migration, /email/i);
   assert.doesNotMatch(migration, /question/i);
+});
+
+test("latest entitlement schema retains Stripe and removes Paddle", async () => {
+  const migration = await readFile(
+    new URL("../migrations/0004_remove_paddle_schema.sql", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(migration, /stripe_subscription_id TEXT/);
+  assert.match(
+    migration,
+    /source IN \('signup', 'manual', 'stripe', 'gift'\)/
+  );
+  assert.doesNotMatch(migration, /paddle_subscription_id TEXT/);
+  assert.doesNotMatch(migration, /entitlements_paddle_subscription_idx/);
 });
 
 test("homepage uses server-created Stripe Checkout and exposes no secrets", async () => {
