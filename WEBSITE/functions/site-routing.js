@@ -1,4 +1,5 @@
 import { voiceEnabledForEnvironment } from "./rocky-voice.js";
+import { creatorsConfiguration } from "./creators.js";
 
 export const CANONICAL_HOSTNAME = "www.rockyaloha.com";
 export const APEX_HOSTNAME = "rockyaloha.com";
@@ -32,13 +33,16 @@ export function healthState(env) {
     env.STRIPE_WEBHOOK_SECRET &&
     env.ROCKY_DB
   );
+  const creators = creatorsConfiguration(env);
+  const creatorsReady = !creators.enabled || creators.ready;
   const ready = Boolean(
     protectedByTurnstile &&
     aiEnabled &&
     env.OPENAI_API_KEY &&
     voiceReady &&
     identityReady &&
-    paymentsReady
+    paymentsReady &&
+    creatorsReady
   );
 
   return {
@@ -53,7 +57,9 @@ export function healthState(env) {
       identityEnabled,
       identityReady,
       paymentsEnabled,
-      paymentsReady
+      paymentsReady,
+      creatorsEnabled: creators.enabled,
+      creatorsReady
     }
   };
 }

@@ -5,10 +5,45 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Rocky is a 4-billion-year-old AI pet rock companion delivering calm perspective, island humor, and daily wisdom.">
   <meta name="theme-color" content="#102b39">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Project Rocky">
+  <meta property="og:title" content="ROCKY | Ancient Wisdom. Island Humor.">
+  <meta property="og:description" content="When life gets noisy, ask a four-billion-year-old AI pet rock.">
+  <meta property="og:url" content="https://www.rockyaloha.com/">
+  <meta property="og:image" content="https://www.rockyaloha.com/rocky-hero.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="ROCKY | Ancient Wisdom. Island Humor.">
+  <meta name="twitter:description" content="Four billion years of perspective, island humor, and aloha.">
+  <meta name="twitter:image" content="https://www.rockyaloha.com/rocky-hero.png">
   <title>ROCKY | Ancient Wisdom. Island Humor.</title>
   <link rel="canonical" href="https://www.rockyaloha.com/">
   <link rel="preload" href="rocky-hero.png" as="image">
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" defer></script>
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Project Rocky",
+      "applicationCategory": "LifestyleApplication",
+      "operatingSystem": "Web",
+      "url": "https://www.rockyaloha.com/",
+      "description": "A four-billion-year-old AI pet rock companion delivering calm perspective, island humor, and daily wisdom.",
+      "offers": [
+        {
+          "@type": "Offer",
+          "name": "Rocky Plus Monthly",
+          "price": "7.99",
+          "priceCurrency": "USD"
+        },
+        {
+          "@type": "Offer",
+          "name": "Rocky Plus Annual",
+          "price": "59.00",
+          "priceCurrency": "USD"
+        }
+      ]
+    }
+  </script>
   <style>
     :root {
       --ink: #142129;
@@ -540,6 +575,43 @@
       font-size: .74rem;
     }
 
+    .creator-invite {
+      padding: 88px 20px;
+      color: var(--deep-ocean);
+      background:
+        radial-gradient(circle at 82% 20%, rgba(89,196,196,.18), transparent 32%),
+        linear-gradient(135deg, #fff8ec, #edf8f5);
+    }
+
+    .creator-invite[hidden] { display: none; }
+
+    .creator-invite-inner {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 38px;
+      align-items: center;
+      width: min(1080px, 100%);
+      margin: 0 auto;
+      padding: 38px;
+      border: 1px solid rgba(22,105,121,.16);
+      border-radius: 28px;
+      background: rgba(255,255,255,.72);
+      box-shadow: 0 24px 70px rgba(16,43,57,.1);
+    }
+
+    .creator-invite h2 {
+      max-width: 750px;
+      margin: 8px 0 0;
+      font-size: clamp(2rem, 4vw, 3.4rem);
+      letter-spacing: -.045em;
+    }
+
+    .creator-invite p:not(.section-kicker) {
+      max-width: 720px;
+      margin: 16px 0 0;
+      color: var(--muted);
+    }
+
     .footer {
       padding: 42px 20px;
       color: rgba(255,255,255,.65);
@@ -588,6 +660,7 @@
       .principles { grid-template-columns: 1fr; }
       .principle { min-height: auto; }
       .ask-grid { grid-template-columns: 1fr; gap: 34px; }
+      .creator-invite-inner { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 560px) {
@@ -617,6 +690,7 @@
       ROCKY
     </a>
     <div class="nav-actions">
+      <a class="nav-link" id="creatorNavLink" href="/creators" hidden>Creators</a>
       <a class="nav-link" href="#ask-rocky">Ask Rocky</a>
       <button class="nav-link" id="identityButton" type="button" hidden>Sign in</button>
       <div class="identity-user" id="identityUserButton" hidden></div>
@@ -665,6 +739,17 @@
           <h3>One step is enough</h3>
           <p>NT2: build it once, build it right, and move forward without carrying yesterday twice.</p>
         </article>
+      </div>
+    </section>
+
+    <section class="creator-invite" id="creatorInvite" hidden>
+      <div class="creator-invite-inner">
+        <div>
+          <p class="section-kicker">The Founding 20</p>
+          <h2>Creators: help make the internet feel more human.</h2>
+          <p>Rocky is looking for 20 thoughtful creators to introduce four billion years of perspective, island humor, and aloha to the world.</p>
+        </div>
+        <a class="button button-primary" href="/creators">Join the Creator Circle</a>
       </div>
     </section>
 
@@ -728,6 +813,7 @@
     <span>NT2 Forever · Built with perspective and aloha</span>
     <nav class="footer-links" aria-label="Legal and company information">
       <a href="/pricing">Pricing</a>
+      <a id="creatorFooterLink" href="/creators" hidden>Creator Circle</a>
       <a href="/terms">Terms &amp; Conditions</a>
       <a href="/refund-policy">Refund Policy</a>
       <a href="/privacy">Privacy Policy</a>
@@ -752,6 +838,52 @@
     const savedCounter = Number(localStorage.getItem("rockyCounter") || 0);
     document.getElementById("rockyCounter").textContent = savedCounter;
 
+    function safeMarketingToken(value, maximum = 64) {
+      const token = String(value || "").trim().toLowerCase().slice(0, maximum);
+      return /^[a-z0-9][a-z0-9_-]*$/.test(token) ? token : "";
+    }
+
+    function saveReferralAttribution() {
+      const parameters = new URLSearchParams(window.location.search);
+      const referralCode = safeMarketingToken(parameters.get("ref"), 48);
+      const source = safeMarketingToken(parameters.get("utm_source"));
+      const campaign = safeMarketingToken(parameters.get("utm_campaign"));
+      if (referralCode) localStorage.setItem("rockyReferralCode", referralCode);
+      if (source || referralCode) {
+        localStorage.setItem(
+          "rockyMarketingSource",
+          source || "creator"
+        );
+      } else if (!localStorage.getItem("rockyMarketingSource")) {
+        localStorage.setItem("rockyMarketingSource", "direct");
+      }
+      if (campaign || referralCode) {
+        localStorage.setItem(
+          "rockyMarketingCampaign",
+          campaign || "founding20"
+        );
+      } else if (!localStorage.getItem("rockyMarketingCampaign")) {
+        localStorage.setItem("rockyMarketingCampaign", "founding20");
+      }
+    }
+
+    function referralAttribution() {
+      return {
+        referralCode: safeMarketingToken(
+          localStorage.getItem("rockyReferralCode"),
+          48
+        ),
+        source: safeMarketingToken(
+          localStorage.getItem("rockyMarketingSource")
+        ) || "direct",
+        campaign: safeMarketingToken(
+          localStorage.getItem("rockyMarketingCampaign")
+        ) || "founding20"
+      };
+    }
+
+    saveReferralAttribution();
+
     let turnstileToken = "";
     let turnstileWidgetId = null;
     let rockyConfigPromise = null;
@@ -762,6 +894,7 @@
     let identityReady = false;
     let userButtonMounted = false;
     let paymentsReady = false;
+    let creatorsReady = false;
     let checkoutSyncStarted = false;
 
     function loadRockyConfig() {
@@ -993,6 +1126,18 @@
 
       try {
         const token = await sessionToken();
+        const attribution = referralAttribution();
+        if (creatorsReady && attribution.referralCode) {
+          fetch("/creator-event", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            keepalive: true,
+            body: JSON.stringify({
+              event: "checkout_started",
+              ...attribution
+            })
+          }).catch(() => {});
+        }
         const response = await fetch("/create-checkout-session", {
           method: "POST",
           headers: {
@@ -1000,7 +1145,10 @@
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`
           },
-          body: JSON.stringify({ plan })
+          body: JSON.stringify({
+            plan,
+            referralCode: attribution.referralCode
+          })
         });
         const result = await response.json();
 
@@ -1045,6 +1193,36 @@
         }
       } catch {
         paymentsReady = false;
+      }
+    }
+
+    async function initializeCreators() {
+      try {
+        const config = await loadRockyConfig();
+        creatorsReady = Boolean(
+          config.creators?.enabled &&
+          config.creators?.ready
+        );
+        if (!creatorsReady) return;
+
+        document.getElementById("creatorNavLink").hidden = false;
+        document.getElementById("creatorFooterLink").hidden = false;
+        document.getElementById("creatorInvite").hidden = false;
+
+        const attribution = referralAttribution();
+        if (attribution.referralCode) {
+          fetch("/creator-event", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            keepalive: true,
+            body: JSON.stringify({
+              event: "share_clicked",
+              ...attribution
+            })
+          }).catch(() => {});
+        }
+      } catch {
+        creatorsReady = false;
       }
     }
 
@@ -1238,6 +1416,7 @@
       initializeTurnstile();
       initializeIdentity();
       initializePayments();
+      initializeCreators();
     });
     document.getElementById("askButton").addEventListener("click", askRocky);
     document.getElementById("hearRockyButton").addEventListener("click", hearRocky);

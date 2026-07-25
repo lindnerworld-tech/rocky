@@ -34,6 +34,11 @@ class FakeStatement {
       }
       return null;
     }
+    if (this.sql.includes("FROM creator_applications")) {
+      const application = this.db.creatorApplications.get(this.params[0]);
+      if (!application || application.status === "declined") return null;
+      return { referral_code: application.referralCode };
+    }
     throw new Error(`Unexpected first SQL: ${this.sql}`);
   }
 
@@ -95,6 +100,54 @@ class FakeStatement {
       return { success: true };
     }
 
+    if (this.sql.includes("INSERT INTO creator_referrals")) {
+      const [
+        subscriptionId,
+        userId,
+        referralCode,
+        status,
+        eventId,
+        occurredAt,
+        createdAt,
+        updatedAt
+      ] = this.params;
+      const existing = this.db.creatorReferrals.get(subscriptionId);
+      this.db.creatorReferrals.set(subscriptionId, {
+        subscriptionId,
+        userId,
+        referralCode,
+        status,
+        eventId,
+        occurredAt,
+        createdAt: existing?.createdAt || createdAt,
+        updatedAt
+      });
+      return { success: true, meta: { changes: 1 } };
+    }
+
+    if (this.sql.includes("UPDATE creator_referrals")) {
+      const [
+        status,
+        eventId,
+        occurredAt,
+        updatedAt,
+        subscriptionId
+      ] = this.params;
+      const referral = this.db.creatorReferrals.get(subscriptionId);
+      if (referral) {
+        Object.assign(referral, {
+          status,
+          eventId,
+          occurredAt,
+          updatedAt
+        });
+      }
+      return {
+        success: true,
+        meta: { changes: referral ? 1 : 0 }
+      };
+    }
+
     throw new Error(`Unexpected run SQL: ${this.sql}`);
   }
 }
@@ -104,6 +157,8 @@ class FakeD1 {
     this.events = new Map();
     this.users = new Set();
     this.entitlements = new Map();
+    this.creatorApplications = new Map();
+    this.creatorReferrals = new Map();
   }
 
   prepare(sql) {
@@ -234,7 +289,10 @@ test("checkout requires a signed-in Rocky account", async () => {
   });
   const result = await createStripeCheckout(
     request,
-    makeEnv(),
+    {
+      ...makeEnv(),
+      ROCKY_CREATORS_ENABLED: "true"
+    },
     async () => {
       throw new Error("Stripe must not be called");
     },
@@ -252,12 +310,16 @@ test("checkout maps an approved plan to a server-side Stripe price", async () =>
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       plan: "monthly",
-      priceId: "price_attacker_controlled"
+      priceId: "price_attacker_controlled",
+      referralCode: "rocky-island-storyteller-abcdef"
     })
   });
   const result = await createStripeCheckout(
     request,
-    makeEnv(),
+    {
+      ...makeEnv(),
+      ROCKY_CREATORS_ENABLED: "true"
+    },
     async (url, init) => {
       stripeRequest = { url, init };
       return new Response(JSON.stringify({
@@ -292,6 +354,14 @@ test("checkout maps an approved plan to a server-side Stripe price", async () =>
     "user_rocky"
   );
   assert.equal(
+    form.get("metadata[rocky_referral_code]"),
+    "rocky-island-storyteller-abcdef"
+  );
+  assert.equal(
+    form.get("subscription_data[metadata][rocky_referral_code]"),
+    "rocky-island-storyteller-abcdef"
+  );
+  assert.equal(
     form.get("success_url"),
     "https://www.rockyaloha.com/?checkout=success"
   );
@@ -300,6 +370,36 @@ test("checkout maps an approved plan to a server-side Stripe price", async () =>
     "https://www.rockyaloha.com/?checkout=canceled"
   );
   assert.equal(stripeRequest.init.body.includes("price_attacker_controlled"), false);
+});
+
+test("checkout ignores referral input while the creator program is disabled", async () => {
+  let stripeBody = "";
+  const result = await createStripeCheckout(
+    new Request("https://www.rockyaloha.com/create-checkout-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        plan: "monthly",
+        referralCode: "rocky-island-storyteller-abcdef"
+      })
+    }),
+    makeEnv(),
+    async (_url, init) => {
+      stripeBody = init.body;
+      return new Response(JSON.stringify({
+        id: "cs_test_rocky",
+        url: "https://checkout.stripe.com/c/pay/cs_test_rocky"
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      });
+    },
+    async () => ({ authenticated: true, userId: "user_rocky" }),
+    async () => ({ plan: "free" })
+  );
+
+  assert.equal(result.status, 200);
+  assert.equal(stripeBody.includes("rocky_referral_code"), false);
 });
 
 test("checkout returns a safe diagnostic for a rejected Stripe price", async () => {
@@ -390,6 +490,39 @@ test("verified subscription events grant Plus and are idempotent", async () => {
     priceId: "price_month",
     lastEventAt: "2026-07-17T12:00:00.000Z"
   });
+});
+
+test("verified subscription events confirm a known creator referral", async () => {
+  const db = new FakeD1();
+  const env = {
+    ...makeEnv(db),
+    ROCKY_CREATORS_ENABLED: "true"
+  };
+  db.creatorApplications.set("rocky-island-storyteller-abcdef", {
+    status: "active",
+    referralCode: "rocky-island-storyteller-abcdef"
+  });
+  const event = subscriptionEvent();
+  event.data.object.metadata.rocky_referral_code =
+    "rocky-island-storyteller-abcdef";
+
+  const result = await processStripeEvent(env, event);
+
+  assert.equal(result.updated, true);
+  assert.equal(result.referralTracked, true);
+  assert.deepEqual(
+    db.creatorReferrals.get("sub_01rocky"),
+    {
+      subscriptionId: "sub_01rocky",
+      userId: "user_rocky",
+      referralCode: "rocky-island-storyteller-abcdef",
+      status: "active",
+      eventId: "evt_01test",
+      occurredAt: "2026-07-17T12:00:00.000Z",
+      createdAt: db.creatorReferrals.get("sub_01rocky").createdAt,
+      updatedAt: db.creatorReferrals.get("sub_01rocky").updatedAt
+    }
+  );
 });
 
 test("stored subscription identity survives missing webhook metadata", async () => {

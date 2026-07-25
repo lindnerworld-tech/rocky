@@ -7,6 +7,7 @@
   "vars": {
     "ROCKY_AI_ENABLED": "true",
     "ROCKY_VOICE_ENABLED": "true",
+    "ROCKY_CREATORS_ENABLED": "false",
     "ROCKY_DAILY_IP_LIMIT": "1",
     "ROCKY_GLOBAL_DAILY_LIMIT": "500",
     "ROCKY_IDENTITY_ENABLED": "true",
@@ -68,6 +69,8 @@
       "/index.html",
       "/ask-rocky",
       "/speak-rocky",
+      "/creator-apply",
+      "/creator-event",
       "/rocky-config",
       "/health",
       "/me",
@@ -81,6 +84,7 @@
       "vars": {
         "ROCKY_AI_ENABLED": "true",
         "ROCKY_VOICE_ENABLED": "false",
+        "ROCKY_CREATORS_ENABLED": "true",
         "ROCKY_DAILY_IP_LIMIT": "1",
         "ROCKY_GLOBAL_DAILY_LIMIT": "25",
         "ROCKY_IDENTITY_ENABLED": "true",
@@ -139,6 +143,8 @@
           "/index.html",
           "/ask-rocky",
           "/speak-rocky",
+          "/creator-apply",
+          "/creator-event",
           "/rocky-config",
           "/health",
           "/me",

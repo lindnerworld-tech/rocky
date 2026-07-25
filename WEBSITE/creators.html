@@ -1,0 +1,828 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Join Project Rocky's Founding 20 Creator Circle and share four billion years of perspective with your audience.">
+  <meta name="theme-color" content="#102b39">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Project Rocky">
+  <meta property="og:title" content="Project Rocky Founding 20 Creator Circle">
+  <meta property="og:description" content="Rocky is looking for 20 creators who make the internet feel more human.">
+  <meta property="og:url" content="https://www.rockyaloha.com/creators">
+  <meta property="og:image" content="https://www.rockyaloha.com/rocky-hero.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Project Rocky Founding 20 Creator Circle">
+  <meta name="twitter:description" content="Four billion years of perspective. Twenty first packages. One honest story.">
+  <meta name="twitter:image" content="https://www.rockyaloha.com/rocky-hero.png">
+  <title>Founding 20 Creator Circle | Project Rocky</title>
+  <link rel="canonical" href="https://www.rockyaloha.com/creators">
+  <link rel="preload" href="/rocky-hero.png" as="image">
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" defer></script>
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Project Rocky Founding 20 Creator Circle",
+      "url": "https://www.rockyaloha.com/creators",
+      "description": "Apply to join Project Rocky's Founding 20 Creator Circle.",
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": "Project Rocky",
+        "url": "https://www.rockyaloha.com/"
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --deep: #0d2836;
+      --ocean: #166979;
+      --turquoise: #64d0ca;
+      --sunrise: #f2a65a;
+      --coral: #dd744c;
+      --sand: #f5efe4;
+      --cream: #fffaf1;
+      --ink: #142129;
+      --muted: #617078;
+      --white: #fff;
+      --shadow: 0 24px 80px rgba(13, 40, 54, .16);
+      --radius: 26px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--sand);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    [hidden] { display: none !important; }
+
+    .skip-link {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 100;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: var(--white);
+      color: var(--deep);
+      transform: translateY(-160%);
+    }
+    .skip-link:focus { transform: translateY(0); }
+
+    .hero {
+      position: relative;
+      isolation: isolate;
+      min-height: 720px;
+      overflow: hidden;
+      color: var(--white);
+      background: #17303c url("/rocky-hero.png") 67% center / cover no-repeat;
+    }
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background:
+        linear-gradient(90deg, rgba(5,23,32,.96) 0%, rgba(7,28,38,.82) 43%, rgba(7,28,38,.24) 72%),
+        linear-gradient(0deg, rgba(7,25,34,.7), transparent 42%);
+    }
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: min(1160px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 24px 0;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--white);
+      text-decoration: none;
+      font-weight: 900;
+      letter-spacing: .18em;
+    }
+    .brand-mark {
+      width: 34px;
+      height: 28px;
+      border: 2px solid rgba(255,255,255,.88);
+      border-radius: 48% 52% 44% 56%;
+      background: rgba(255,255,255,.12);
+      box-shadow: inset 0 -8px 14px rgba(0,0,0,.18);
+      transform: rotate(-4deg);
+    }
+    .nav-link {
+      padding: 9px 16px;
+      border: 1px solid rgba(255,255,255,.4);
+      border-radius: 999px;
+      background: rgba(8,27,36,.24);
+      color: var(--white);
+      text-decoration: none;
+      font-weight: 800;
+      backdrop-filter: blur(12px);
+    }
+    .hero-inner {
+      width: min(1160px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 92px 0 120px;
+    }
+    .hero-copy { max-width: 680px; }
+    .kicker {
+      display: inline-flex;
+      align-items: center;
+      margin: 0 0 22px;
+      padding: 8px 14px;
+      border: 1px solid rgba(255,255,255,.28);
+      border-radius: 999px;
+      background: rgba(8,28,38,.3);
+      color: #fff1dc;
+      font-size: .78rem;
+      font-weight: 900;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    h1, h2, h3 { line-height: 1.08; }
+    h1 {
+      max-width: 720px;
+      margin: 0;
+      font-size: clamp(3.2rem, 7vw, 6.25rem);
+      letter-spacing: -.06em;
+    }
+    .hero-lead {
+      max-width: 640px;
+      margin: 24px 0 0;
+      color: #f9e8d1;
+      font-size: clamp(1.08rem, 2vw, 1.35rem);
+    }
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 32px;
+    }
+    .button {
+      display: inline-flex;
+      min-height: 52px;
+      align-items: center;
+      justify-content: center;
+      padding: 13px 22px;
+      border: 0;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 900;
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .button:hover { transform: translateY(-2px); }
+    .button-primary {
+      background: var(--sunrise);
+      color: #26180b;
+      box-shadow: 0 14px 35px rgba(242,166,90,.3);
+    }
+    .button-secondary {
+      border: 1px solid rgba(255,255,255,.45);
+      background: rgba(255,255,255,.1);
+      color: var(--white);
+    }
+
+    .proof {
+      width: min(1040px, calc(100% - 40px));
+      margin: -54px auto 0;
+      padding: 25px 30px;
+      border-radius: 22px;
+      background: var(--cream);
+      box-shadow: var(--shadow);
+      text-align: center;
+      font-size: clamp(1.02rem, 2vw, 1.22rem);
+      font-weight: 850;
+    }
+    .proof strong { color: var(--coral); }
+
+    .section {
+      width: min(1080px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 100px 0;
+    }
+    .section-label {
+      margin: 0 0 12px;
+      color: var(--coral);
+      font-size: .76rem;
+      font-weight: 900;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+    }
+    .section h2 {
+      max-width: 780px;
+      margin: 0;
+      color: var(--deep);
+      font-size: clamp(2.2rem, 5vw, 4rem);
+      letter-spacing: -.045em;
+    }
+    .section-lead {
+      max-width: 760px;
+      margin: 20px 0 0;
+      color: var(--muted);
+      font-size: 1.08rem;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-top: 42px;
+    }
+    .card {
+      padding: 28px;
+      border: 1px solid rgba(22,105,121,.13);
+      border-radius: var(--radius);
+      background: rgba(255,250,241,.92);
+      box-shadow: 0 18px 50px rgba(13,40,54,.08);
+    }
+    .card-number {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border-radius: 50%;
+      background: rgba(89,196,196,.18);
+      color: var(--ocean);
+      font-weight: 950;
+    }
+    .card h3 { margin: 20px 0 10px; font-size: 1.25rem; }
+    .card p { margin: 0; color: var(--muted); }
+
+    .application-shell {
+      padding: 98px 20px;
+      color: var(--white);
+      background: var(--deep);
+    }
+    .application-grid {
+      display: grid;
+      grid-template-columns: minmax(0, .78fr) minmax(0, 1.22fr);
+      gap: 48px;
+      width: min(1080px, 100%);
+      margin: 0 auto;
+      align-items: start;
+    }
+    .application-copy h2 {
+      margin: 0;
+      font-size: clamp(2.4rem, 5vw, 4.3rem);
+      letter-spacing: -.05em;
+    }
+    .application-copy > p { color: rgba(255,255,255,.75); }
+    .promise-list {
+      display: grid;
+      gap: 13px;
+      margin: 30px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    .promise-list li {
+      display: grid;
+      grid-template-columns: 24px 1fr;
+      gap: 10px;
+      color: #eef9f8;
+    }
+    .promise-list li::before {
+      content: "✓";
+      color: var(--turquoise);
+      font-weight: 950;
+    }
+    .form-card {
+      padding: 30px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.07);
+      box-shadow: 0 24px 70px rgba(0,0,0,.22);
+      backdrop-filter: blur(14px);
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 17px;
+    }
+    .field { display: grid; gap: 7px; }
+    .field-full { grid-column: 1 / -1; }
+    label { color: #f2f8f8; font-size: .88rem; font-weight: 800; }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 13px;
+      color: var(--white);
+      background: rgba(7,27,36,.72);
+      outline: none;
+    }
+    input, select { min-height: 48px; padding: 10px 13px; }
+    textarea { min-height: 130px; padding: 13px; resize: vertical; }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--turquoise);
+      box-shadow: 0 0 0 3px rgba(100,208,202,.14);
+    }
+    .honeypot {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      overflow: hidden !important;
+      clip: rect(1px,1px,1px,1px) !important;
+      white-space: nowrap !important;
+    }
+    .consent {
+      display: grid;
+      grid-template-columns: 20px 1fr;
+      gap: 10px;
+      align-items: start;
+      color: rgba(255,255,255,.75);
+      font-size: .82rem;
+    }
+    .consent input { width: 18px; min-height: 18px; margin-top: 3px; }
+    .consent a { color: var(--turquoise); }
+    .turnstile-wrap { min-height: 66px; margin-top: 2px; }
+    .submit-button { width: 100%; margin-top: 2px; }
+    .form-status {
+      min-height: 26px;
+      margin: 12px 0 0;
+      color: #ffd5b8;
+      font-size: .88rem;
+    }
+    .program-note {
+      margin-top: 22px;
+      color: rgba(255,255,255,.58);
+      font-size: .78rem;
+    }
+    .program-note a { color: rgba(255,255,255,.85); }
+
+    .success {
+      padding: 6px;
+    }
+    .success-badge {
+      display: inline-flex;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: rgba(100,208,202,.16);
+      color: #a8eeeb;
+      font-size: .75rem;
+      font-weight: 900;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+    .success h3 { margin: 20px 0 10px; font-size: 2rem; }
+    .success p { color: rgba(255,255,255,.72); }
+    .share-box {
+      display: grid;
+      gap: 10px;
+      margin-top: 22px;
+      padding: 17px;
+      border: 1px solid rgba(100,208,202,.25);
+      border-radius: 15px;
+      background: rgba(5,22,30,.55);
+    }
+    .share-url {
+      overflow-wrap: anywhere;
+      color: #bdf4f0;
+      font-size: .83rem;
+    }
+    .share-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+    .small-button {
+      min-height: 42px;
+      padding: 9px 15px;
+      border: 1px solid rgba(255,255,255,.25);
+      border-radius: 999px;
+      color: var(--white);
+      background: rgba(255,255,255,.08);
+      font-weight: 850;
+    }
+
+    .disclosure {
+      width: min(1080px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 82px 0;
+    }
+    .disclosure-card {
+      padding: 30px;
+      border-left: 5px solid var(--sunrise);
+      border-radius: 18px;
+      background: var(--cream);
+      box-shadow: 0 16px 45px rgba(13,40,54,.08);
+    }
+    .disclosure-card h2 { margin: 0 0 12px; font-size: 1.55rem; }
+    .disclosure-card p { margin: 0; color: var(--muted); }
+
+    .footer {
+      display: grid;
+      gap: 10px;
+      padding: 42px 20px;
+      color: rgba(255,255,255,.68);
+      background: #091f2a;
+      text-align: center;
+    }
+    .footer strong { color: var(--white); letter-spacing: .13em; }
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px 18px;
+      font-size: .82rem;
+    }
+    .footer-links a { color: rgba(255,255,255,.74); }
+
+    @media (max-width: 820px) {
+      .cards, .application-grid { grid-template-columns: 1fr; }
+      .application-grid { gap: 34px; }
+      .hero { min-height: 690px; background-position: 70% center; }
+    }
+    @media (max-width: 580px) {
+      .nav { width: calc(100% - 28px); }
+      .nav-link { padding: 8px 12px; font-size: .84rem; }
+      .hero-inner { width: calc(100% - 28px); padding-top: 74px; }
+      .hero-actions .button { width: 100%; }
+      .proof, .section, .disclosure { width: calc(100% - 28px); }
+      .form-grid { grid-template-columns: 1fr; }
+      .field-full { grid-column: auto; }
+      .form-card { padding: 22px; }
+      .application-shell { padding-inline: 14px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#content">Skip to content</a>
+
+  <header class="hero">
+    <nav class="nav" aria-label="Primary navigation">
+      <a class="brand" href="/" aria-label="Project Rocky home">
+        <span class="brand-mark" aria-hidden="true"></span>
+        ROCKY
+      </a>
+      <a class="nav-link" href="/">Ask Rocky</a>
+    </nav>
+
+    <div class="hero-inner">
+      <div class="hero-copy">
+        <p class="kicker">The Founding 20 Creator Circle</p>
+        <h1>Help make the internet feel more human.</h1>
+        <p class="hero-lead">Rocky is a four-billion-year-old AI pet rock from Hawaii with ancient perspective, island humor, and no interest in shouting. We are looking for 20 thoughtful creators to help introduce him to the world.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#apply">Apply for the Founding 20</a>
+          <a class="button button-secondary" href="/#ask-rocky">Meet Rocky first</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="proof">
+    <strong>20 first packages.</strong> One honest introduction. No scripts. No manufactured enthusiasm.
+  </div>
+
+  <main id="content">
+    <section class="section" aria-labelledby="why-rocky">
+      <p class="section-label">A different kind of collaboration</p>
+      <h2 id="why-rocky">A character people can ask, hear, hold, and remember.</h2>
+      <p class="section-lead">Rocky combines a live AI companion with a small handcrafted piece of Hawaii-inspired storytelling. Selected Founding 20 creators may receive one of the first physical Project Rocky packages. Selection is limited, and applying does not guarantee a package.</p>
+
+      <div class="cards">
+        <article class="card">
+          <span class="card-number">1</span>
+          <h3>Try Rocky honestly</h3>
+          <p>Ask the question you actually carry. Share the answer only if it means something to you.</p>
+        </article>
+        <article class="card">
+          <span class="card-number">2</span>
+          <h3>Use your own voice</h3>
+          <p>No forced script or canned praise. Rocky works best when the story sounds like the person telling it.</p>
+        </article>
+        <article class="card">
+          <span class="card-number">3</span>
+          <h3>See what moved</h3>
+          <p>Your personal creator link measures visits and confirmed Rocky Plus referrals without exposing customer details.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="application-shell" id="apply" aria-labelledby="apply-title">
+      <div class="application-grid">
+        <div class="application-copy">
+          <p class="section-label" style="color:#86e0dc">Founding application</p>
+          <h2 id="apply-title">Tell Rocky what you make—and why it matters.</h2>
+          <p>The system creates your personal Rocky share link as soon as your application is received. Package invitations are reviewed separately.</p>
+          <ul class="promise-list">
+            <li>One protected application—no public applicant list.</li>
+            <li>An immediate personal link for sharing and attribution.</li>
+            <li>No promise of payment, free product, acceptance, or exclusivity.</li>
+            <li>Any paid or gifted collaboration requires clear disclosure.</li>
+          </ul>
+        </div>
+
+        <div class="form-card">
+          <form id="creatorForm" novalidate>
+            <div class="form-grid">
+              <div class="field">
+                <label for="creatorName">Your name or creator name</label>
+                <input id="creatorName" name="name" type="text" maxlength="80" autocomplete="name" required>
+              </div>
+              <div class="field">
+                <label for="creatorEmail">Email</label>
+                <input id="creatorEmail" name="email" type="email" maxlength="254" autocomplete="email" required>
+              </div>
+              <div class="field">
+                <label for="creatorPlatform">Primary platform</label>
+                <select id="creatorPlatform" name="platform" required>
+                  <option value="">Choose one</option>
+                  <option value="instagram">Instagram</option>
+                  <option value="tiktok">TikTok</option>
+                  <option value="youtube">YouTube</option>
+                  <option value="facebook">Facebook</option>
+                  <option value="x">X</option>
+                  <option value="linkedin">LinkedIn</option>
+                  <option value="podcast">Podcast</option>
+                  <option value="blog">Blog or newsletter</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="creatorAudience">Approximate audience</label>
+                <select id="creatorAudience" name="audienceRange" required>
+                  <option value="">Choose one</option>
+                  <option value="under-1k">Under 1,000</option>
+                  <option value="1k-10k">1,000–10,000</option>
+                  <option value="10k-50k">10,000–50,000</option>
+                  <option value="50k-250k">50,000–250,000</option>
+                  <option value="250k-plus">250,000+</option>
+                </select>
+              </div>
+              <div class="field field-full">
+                <label for="creatorProfile">Public profile or channel URL</label>
+                <input id="creatorProfile" name="profileUrl" type="url" maxlength="400" placeholder="https://" required>
+              </div>
+              <div class="field field-full">
+                <label for="creatorMessage">Why does Rocky fit your audience?</label>
+                <textarea id="creatorMessage" name="message" maxlength="1200" required></textarea>
+              </div>
+              <div class="honeypot" aria-hidden="true">
+                <label for="creatorWebsite">Company website</label>
+                <input id="creatorWebsite" name="website" type="text" tabindex="-1" autocomplete="off">
+              </div>
+              <div class="field field-full">
+                <label class="consent">
+                  <input id="creatorConsent" name="consent" type="checkbox" required>
+                  <span>I agree that Project Rocky may use this information to review and contact me about the creator program, as described in the <a href="/privacy">Privacy Policy</a>. I understand that applying is not acceptance.</span>
+                </label>
+              </div>
+              <div class="field field-full">
+                <div class="turnstile-wrap" id="creatorTurnstile" aria-label="Security verification"></div>
+              </div>
+              <div class="field field-full">
+                <button class="button button-primary submit-button" id="creatorSubmit" type="submit" disabled>Preparing application...</button>
+                <p class="form-status" id="creatorStatus" aria-live="polite"></p>
+              </div>
+            </div>
+          </form>
+
+          <section class="success" id="creatorSuccess" aria-live="polite" hidden>
+            <span class="success-badge">Application received</span>
+            <h3>Your Rocky creator link is ready.</h3>
+            <p>Use this link when you introduce Rocky. It measures visits and confirmed Rocky Plus referrals without showing you customer information.</p>
+            <div class="share-box">
+              <strong>Your personal link</strong>
+              <span class="share-url" id="creatorShareUrl"></span>
+              <div class="share-actions">
+                <button class="small-button" id="copyCreatorLink" type="button">Copy link</button>
+                <button class="small-button" id="shareCreatorLink" type="button">Share Rocky</button>
+              </div>
+              <span class="form-status" id="shareStatus" aria-live="polite"></span>
+            </div>
+          </section>
+
+          <p class="program-note">Project Rocky may contact selected applicants at the email provided. There is no obligation to post. If you receive a free product, payment, discount, or other benefit and mention Rocky, clearly disclose that relationship with the endorsement. See the <a href="https://www.ftc.gov/influencers" rel="noopener noreferrer">FTC influencer guidance</a>.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="disclosure" aria-labelledby="honest-sharing">
+      <div class="disclosure-card">
+        <h2 id="honest-sharing">A simple rule: disclose the relationship.</h2>
+        <p>If Project Rocky gives you a package or anything else of value and you post about it, make the connection obvious in the post itself—for example: “Project Rocky sent me this package at no cost. Opinions are mine.” Share only your real experience and never make health, financial, or other claims Rocky does not make.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <strong>PROJECT ROCKY</strong>
+    <span>Four billion years of perspective · Built in Hawaii with aloha</span>
+    <nav class="footer-links" aria-label="Legal and company information">
+      <a href="/">Ask Rocky</a>
+      <a href="/pricing">Pricing</a>
+      <a href="/terms">Terms &amp; Conditions</a>
+      <a href="/privacy">Privacy Policy</a>
+      <a href="mailto:support@rockyaloha.com">Contact</a>
+    </nav>
+  </footer>
+
+  <script>
+    const safeToken = value => {
+      const token = String(value || "").trim().toLowerCase();
+      return /^[a-z0-9][a-z0-9_-]{0,63}$/.test(token) ? token : "";
+    };
+
+    const parameters = new URLSearchParams(window.location.search);
+    const source = safeToken(parameters.get("utm_source")) || "direct";
+    const campaign = safeToken(parameters.get("utm_campaign")) || "founding20";
+    let creatorTurnstileToken = "";
+    let creatorTurnstileWidget = null;
+    let shareUrl = "";
+    let referralCode = "";
+    let applicationStarted = false;
+
+    function recordEvent(event, code = referralCode) {
+      fetch("/creator-event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        keepalive: true,
+        body: JSON.stringify({
+          event,
+          referralCode: code,
+          source,
+          campaign
+        })
+      }).catch(() => {});
+    }
+
+    async function creatorConfiguration() {
+      const response = await fetch("/rocky-config", {
+        headers: { "Accept": "application/json" },
+        cache: "no-store"
+      });
+      const configuration = await response.json();
+      if (!response.ok) throw new Error("configuration_unavailable");
+      return configuration;
+    }
+
+    function resetTurnstile() {
+      creatorTurnstileToken = "";
+      if (window.turnstile && creatorTurnstileWidget !== null) {
+        window.turnstile.reset(creatorTurnstileWidget);
+      }
+    }
+
+    async function initializeCreatorProgram() {
+      const submit = document.getElementById("creatorSubmit");
+      const status = document.getElementById("creatorStatus");
+
+      try {
+        const configuration = await creatorConfiguration();
+        if (!configuration.creators?.enabled) {
+          submit.textContent = "Applications opening shortly";
+          status.textContent = "Rocky's Creator Circle is built and preparing for launch.";
+          return;
+        }
+        if (
+          !configuration.creators.ready ||
+          !configuration.protected ||
+          !configuration.turnstileSiteKey ||
+          !window.turnstile
+        ) {
+          throw new Error("program_not_ready");
+        }
+
+        creatorTurnstileWidget = window.turnstile.render("#creatorTurnstile", {
+          sitekey: configuration.turnstileSiteKey,
+          action: "creator_apply",
+          appearance: "interaction-only",
+          size: "flexible",
+          theme: "dark",
+          callback(token) {
+            creatorTurnstileToken = token;
+            submit.disabled = false;
+            submit.textContent = "Create my Rocky creator link";
+          },
+          "expired-callback"() {
+            creatorTurnstileToken = "";
+            submit.disabled = true;
+            submit.textContent = "Refreshing protection...";
+          },
+          "error-callback"() {
+            creatorTurnstileToken = "";
+            submit.disabled = true;
+            submit.textContent = "Protection unavailable";
+            status.textContent = "Rocky's safety check needs a moment. Refresh and try again.";
+            return true;
+          }
+        });
+
+        recordEvent("landing_view");
+      } catch {
+        submit.textContent = "Applications unavailable";
+        status.textContent = "Rocky's Creator Circle needs a moment. Please try again later.";
+      }
+    }
+
+    document.getElementById("creatorForm").addEventListener("focusin", () => {
+      if (applicationStarted) return;
+      applicationStarted = true;
+      recordEvent("application_started");
+    }, { once: true });
+
+    document.getElementById("creatorForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const submit = document.getElementById("creatorSubmit");
+      const status = document.getElementById("creatorStatus");
+
+      if (!form.reportValidity()) return;
+      if (!creatorTurnstileToken) {
+        status.textContent = "Please complete Rocky's quick safety check.";
+        return;
+      }
+
+      submit.disabled = true;
+      submit.textContent = "Sending your application...";
+      status.textContent = "";
+      const token = creatorTurnstileToken;
+      creatorTurnstileToken = "";
+      const fields = new FormData(form);
+
+      try {
+        const response = await fetch("/creator-apply", {
+          method: "POST",
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            name: fields.get("name"),
+            email: fields.get("email"),
+            platform: fields.get("platform"),
+            profileUrl: fields.get("profileUrl"),
+            audienceRange: fields.get("audienceRange"),
+            message: fields.get("message"),
+            website: fields.get("website"),
+            consent: fields.get("consent") === "on",
+            turnstileToken: token,
+            source,
+            campaign
+          })
+        });
+        const result = await response.json();
+        if (!response.ok || !result.shareUrl || !result.referralCode) {
+          throw new Error(String(result.error || "application_unavailable"));
+        }
+
+        shareUrl = result.shareUrl;
+        referralCode = result.referralCode;
+        document.getElementById("creatorShareUrl").textContent = shareUrl;
+        form.hidden = true;
+        document.getElementById("creatorSuccess").hidden = false;
+        recordEvent("application_submitted");
+        recordEvent("share_link_created");
+      } catch (error) {
+        const reason = error.message === "invalid_creator_application"
+          ? "Please check each field and try again."
+          : "Rocky could not save the application yet. Please try again.";
+        status.textContent = reason;
+        submit.textContent = "Create my Rocky creator link";
+        resetTurnstile();
+      }
+    });
+
+    document.getElementById("copyCreatorLink").addEventListener("click", async () => {
+      const status = document.getElementById("shareStatus");
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        status.textContent = "Creator link copied.";
+        recordEvent("share_clicked");
+      } catch {
+        status.textContent = "Select and copy the link above.";
+      }
+    });
+
+    document.getElementById("shareCreatorLink").addEventListener("click", async () => {
+      const status = document.getElementById("shareStatus");
+      const text = "When life gets noisy, ask a rock. Meet Rocky—four billion years of perspective, island humor, and aloha.";
+      try {
+        if (navigator.share) {
+          await navigator.share({ title: "Meet Project Rocky", text, url: shareUrl });
+        } else {
+          await navigator.clipboard.writeText(`${text} ${shareUrl}`);
+          status.textContent = "Rocky share message copied.";
+        }
+        recordEvent("share_clicked");
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          status.textContent = "Sharing paused. Your link is still ready above.";
+        }
+      }
+    });
+
+    window.addEventListener("load", initializeCreatorProgram);
+  </script>
+</body>
+</html>

@@ -14,6 +14,11 @@ import {
   paymentsConfiguration
 } from "./WEBSITE/functions/payments.js";
 import {
+  creatorsConfiguration,
+  handleCreatorApplication,
+  handleCreatorEvent
+} from "./WEBSITE/functions/creators.js";
+import {
   canonicalRedirectFor,
   healthState
 } from "./WEBSITE/functions/site-routing.js";
@@ -151,7 +156,8 @@ export default {
         ),
         voice: publicVoiceConfiguration(env),
         identity: identityConfiguration(env),
-        payments: paymentsConfiguration(env)
+        payments: paymentsConfiguration(env),
+        creators: creatorsConfiguration(env)
       });
     }
 
@@ -175,6 +181,16 @@ export default {
 
     if (url.pathname === "/stripe-webhook") {
       const result = await handleStripeWebhook(request, env);
+      return jsonResponse(result.body, result.status, result.headers);
+    }
+
+    if (url.pathname === "/creator-apply") {
+      const result = await handleCreatorApplication(request, env);
+      return jsonResponse(result.body, result.status, result.headers);
+    }
+
+    if (url.pathname === "/creator-event") {
+      const result = await handleCreatorEvent(request, env);
       return jsonResponse(result.body, result.status, result.headers);
     }
 

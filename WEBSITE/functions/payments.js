@@ -2,6 +2,10 @@ import {
   authenticateRequestIdentity,
   getIdentityAccess
 } from "./identity.js";
+import {
+  recordCreatorReferral,
+  validReferralCode
+} from "./creators.js";
 
 const MAX_CHECKOUT_BODY_BYTES = 4 * 1024;
 const MAX_WEBHOOK_BYTES = 1024 * 1024;
@@ -240,6 +244,9 @@ export async function createStripeCheckout(
   if (!priceId) {
     return { status: 400, body: { error: "invalid_plan" } };
   }
+  const referralCode = env.ROCKY_CREATORS_ENABLED === "true"
+    ? validReferralCode(payload?.referralCode)
+    : "";
 
   let baseUrl;
   try {
@@ -260,6 +267,13 @@ export async function createStripeCheckout(
   form.set("metadata[rocky_plan]", plan);
   form.set("subscription_data[metadata][rocky_user_id]", identity.userId);
   form.set("subscription_data[metadata][rocky_plan]", plan);
+  if (referralCode) {
+    form.set("metadata[rocky_referral_code]", referralCode);
+    form.set(
+      "subscription_data[metadata][rocky_referral_code]",
+      referralCode
+    );
+  }
 
   let response;
   try {
@@ -460,7 +474,23 @@ export async function processStripeEvent(env, event, now = new Date()) {
     ).bind(userId, receivedAt, eventId)
   ]);
 
-  return { duplicate: false, updated: true, userId, status };
+  const referralTracked = await recordCreatorReferral(env, {
+    subscriptionId,
+    userId,
+    referralCode: subscription?.metadata?.rocky_referral_code,
+    status,
+    eventId,
+    occurredAt,
+    receivedAt
+  });
+
+  return {
+    duplicate: false,
+    updated: true,
+    userId,
+    status,
+    referralTracked
+  };
 }
 
 export async function handleStripeWebhook(request, env, now = new Date()) {
