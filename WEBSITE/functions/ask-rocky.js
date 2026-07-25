@@ -3,6 +3,10 @@ import {
   consumeIdentityAllowance,
   refundIdentityAllowance
 } from "./identity.js";
+import {
+  createSpeechTicket,
+  voiceEnabledForEnvironment
+} from "./rocky-voice.js";
 
 const MAX_BODY_BYTES = 4096;
 const MAX_QUESTION_CHARS = 1000;
@@ -278,7 +282,7 @@ export async function onRequestPost(context) {
 
     if (!env.OPENAI_API_KEY) {
       return jsonResponse(
-        { answer: "Rocky's voice is not configured yet." },
+        { answer: "Rocky's answer service is not configured yet." },
         503
       );
     }
@@ -503,7 +507,9 @@ ${question}
     const answer = (data.output || [])
       .flatMap(item => item.content || [])
       .find(content => content.type === "output_text")
-      ?.text;
+      ?.text
+      ?.trim()
+      ?.slice(0, 1200);
 
     if (!answer) {
       const access = await refundFailedIdentityAttempt(
@@ -517,9 +523,24 @@ ${question}
       }, 502);
     }
 
+    let speechTicket = "";
+    if (voiceEnabledForEnvironment(env)) {
+      try {
+        speechTicket = await createSpeechTicket(
+          answer,
+          ipKey,
+          env.OPENAI_API_KEY,
+          new URL(request.url).hostname
+        );
+      } catch (error) {
+        console.error("Rocky speech ticket creation failed:", error);
+      }
+    }
+
     return jsonResponse({
       answer,
-      access: dailyAllowance.access
+      access: dailyAllowance.access,
+      ...(speechTicket ? { speechTicket } : {})
     });
   } catch (error) {
     console.error("Ask Rocky error:", error);
