@@ -862,7 +862,9 @@
           return;
         }
         if (!response.ok || !result.checkoutUrl) {
-          throw new Error("Checkout unavailable");
+          const reason = String(result.reason || result.error || "unknown_error");
+          status.textContent = `Checkout unavailable (${reason}).`;
+          return;
         }
 
         redirecting = true;
