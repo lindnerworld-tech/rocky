@@ -100,6 +100,41 @@ function checkoutUrlFromStripe(value) {
   return "";
 }
 
+function checkoutFailureReason(status, session) {
+  const error = session?.error || {};
+  const type = String(error.type || "");
+  const code = String(error.code || "");
+  const param = String(error.param || "");
+  const message = String(error.message || "").toLowerCase();
+
+  if (
+    Number(status) === 401 ||
+    type === "authentication_error" ||
+    message.includes("api key")
+  ) {
+    return "stripe_authentication_failed";
+  }
+  if (code === "resource_missing" || message.includes("no such price")) {
+    return "stripe_price_not_found";
+  }
+  if (message.includes("managed payments") && message.includes("terms")) {
+    return "managed_payments_terms_required";
+  }
+  if (
+    message.includes("managed payments") &&
+    (message.includes("enable") || message.includes("not enabled"))
+  ) {
+    return "managed_payments_not_enabled";
+  }
+  if (message.includes("tax code")) {
+    return "managed_payments_tax_code_required";
+  }
+  if (param.includes("managed_payments")) {
+    return "managed_payments_not_ready";
+  }
+  return "stripe_request_rejected";
+}
+
 function unixSecondsToIso(value) {
   const seconds = Number(value);
   if (!Number.isFinite(seconds) || seconds <= 0) return null;
@@ -248,9 +283,33 @@ export async function createStripeCheckout(
     return { status: 502, body: { error: "checkout_unavailable" } };
   }
 
-  const checkoutUrl = response.ok ? checkoutUrlFromStripe(session?.url) : "";
+  if (!response.ok) {
+    const reason = checkoutFailureReason(response.status, session);
+    console.error("Stripe Checkout rejected", {
+      status: response.status,
+      type: String(session?.error?.type || ""),
+      code: String(session?.error?.code || ""),
+      param: String(session?.error?.param || ""),
+      reason
+    });
+    return {
+      status: 502,
+      body: {
+        error: "checkout_unavailable",
+        reason
+      }
+    };
+  }
+
+  const checkoutUrl = checkoutUrlFromStripe(session?.url);
   if (!checkoutUrl) {
-    return { status: 502, body: { error: "checkout_unavailable" } };
+    return {
+      status: 502,
+      body: {
+        error: "checkout_unavailable",
+        reason: "stripe_invalid_checkout_url"
+      }
+    };
   }
 
   return {

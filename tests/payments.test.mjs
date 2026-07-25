@@ -302,6 +302,41 @@ test("checkout maps an approved plan to a server-side Stripe price", async () =>
   assert.equal(stripeRequest.init.body.includes("price_attacker_controlled"), false);
 });
 
+test("checkout returns a safe diagnostic for a rejected Stripe price", async () => {
+  const request = new Request("https://www.rockyaloha.com/create-checkout-session", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ plan: "monthly" })
+  });
+  const result = await createStripeCheckout(
+    request,
+    makeEnv(),
+    async () => new Response(JSON.stringify({
+      error: {
+        type: "invalid_request_error",
+        code: "resource_missing",
+        param: "line_items[0][price]",
+        message: "No such price: 'price_sensitive-provider-detail'"
+      }
+    }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" }
+    }),
+    async () => ({ authenticated: true, userId: "user_rocky" }),
+    async () => ({ plan: "free" })
+  );
+
+  assert.equal(result.status, 502);
+  assert.deepEqual(result.body, {
+    error: "checkout_unavailable",
+    reason: "stripe_price_not_found"
+  });
+  assert.equal(
+    JSON.stringify(result.body).includes("price_sensitive-provider-detail"),
+    false
+  );
+});
+
 test("checkout rejects unknown plans and existing Plus accounts", async () => {
   const unknownPlan = await createStripeCheckout(
     new Request("https://www.rockyaloha.com/create-checkout-session", {
