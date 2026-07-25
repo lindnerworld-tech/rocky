@@ -20,30 +20,33 @@ accounts, content, recipients, and written offer terms.
 
 ## Safe launch order
 
-Production is committed with `ROCKY_CREATORS_ENABLED` set to `false`. Staging is
-set to `true`.
+The staged launch was accepted on July 25, 2026:
 
-1. Back up the production D1 database.
-2. Apply migration `0005_creator_launch.sql` to staging.
-3. Deploy and test staging.
-4. Apply the same migration to production.
-5. Deploy production while the production flag remains off.
-6. Verify `/health` reports the existing Rocky systems healthy.
-7. Change the production flag to `true`, deploy, and verify `/creators`.
+- The production D1 database was backed up before the change.
+- Migration `0005_creator_launch.sql` was applied directly to staging and
+  production.
+- Staging accepted a protected application, created a personal referral link,
+  opened the attributed Rocky experience, and recorded aggregate funnel events.
+- Production voice, identity, payments, Turnstile, and creator-table readiness
+  were verified before enablement.
+- `ROCKY_CREATORS_ENABLED` is now `true` in staging and production.
 
-From PowerShell, run these commands from the repository folder:
+### Existing D1 migration warning
+
+The existing staging and production databases were initialized outside
+Wrangler's migration tracking. Wrangler therefore lists migrations `0001`
+through `0005` as pending even though their schemas are installed.
+
+Do **not** run this command against either existing database:
 
 ```powershell
-npx.cmd wrangler d1 migrations apply rocky-identity-staging --remote --env staging
-npx.cmd wrangler deploy --env staging
+npx.cmd wrangler d1 migrations apply
 ```
 
-After staging passes:
-
-```powershell
-npx.cmd wrangler d1 migrations apply rocky-identity-production --remote
-npx.cmd wrangler deploy
-```
+Replaying the historical Paddle and Stripe migrations could replace the current
+entitlements table. Inspect the live schema and use a fresh backup before any
+future schema work. Apply a new migration file directly only after it has passed
+the local rehearsal and staging acceptance sequence.
 
 ## Staging acceptance test
 

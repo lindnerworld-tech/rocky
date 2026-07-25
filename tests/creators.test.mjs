@@ -477,8 +477,12 @@ test("creator page, homepage, and migration provide the full protected funnel", 
   assert.doesNotMatch(migration, /ip_address|raw_ip/i);
   assert.match(worker, /url\.pathname === "\/creator-apply"/);
   assert.match(worker, /url\.pathname === "\/creator-event"/);
-  assert.match(config, /"ROCKY_CREATORS_ENABLED": "false"/);
-  assert.match(config, /"ROCKY_CREATORS_ENABLED": "true"/);
+  const deployment = JSON.parse(config.replace(/^\uFEFF/, ""));
+  assert.equal(deployment.vars.ROCKY_CREATORS_ENABLED, "true");
+  assert.equal(
+    deployment.env.staging.vars.ROCKY_CREATORS_ENABLED,
+    "true"
+  );
   assert.doesNotMatch(creatorPage, /TURNSTILE_SECRET_KEY|STRIPE_SECRET_KEY/);
 });
 
