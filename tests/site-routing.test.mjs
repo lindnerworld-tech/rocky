@@ -46,6 +46,8 @@ test("health is ready only when AI and Turnstile are configured", () => {
   assert.equal(ready.body.status, "ok");
   assert.equal(ready.body.voiceEnabled, false);
   assert.equal(ready.body.voiceReady, true);
+  assert.equal(ready.body.creatorsEnabled, false);
+  assert.equal(ready.body.creatorsReady, true);
   assert.equal(stopped.status, 503);
   assert.equal(stopped.body.status, "degraded");
 });
@@ -89,6 +91,30 @@ test("health fails closed when enabled payments are incomplete", () => {
   assert.equal(degraded.body.paymentsReady, false);
   assert.equal(ready.status, 200);
   assert.equal(ready.body.paymentsReady, true);
+});
+
+test("health fails closed when the creator program is enabled without its store", () => {
+  const degraded = healthState({
+    OPENAI_API_KEY: "configured",
+    ROCKY_AI_ENABLED: "true",
+    TURNSTILE_SITE_KEY: "configured",
+    TURNSTILE_SECRET_KEY: "configured",
+    ROCKY_CREATORS_ENABLED: "true"
+  });
+  const ready = healthState({
+    OPENAI_API_KEY: "configured",
+    ROCKY_AI_ENABLED: "true",
+    TURNSTILE_SITE_KEY: "configured",
+    TURNSTILE_SECRET_KEY: "configured",
+    ROCKY_CREATORS_ENABLED: "true",
+    ROCKY_DB: {}
+  });
+
+  assert.equal(degraded.status, 503);
+  assert.equal(degraded.body.creatorsEnabled, true);
+  assert.equal(degraded.body.creatorsReady, false);
+  assert.equal(ready.status, 200);
+  assert.equal(ready.body.creatorsReady, true);
 });
 
 test("homepage declares the www production URL as canonical", async () => {
