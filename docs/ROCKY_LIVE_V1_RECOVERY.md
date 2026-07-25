@@ -55,7 +55,7 @@ A complete production restoration requires:
 - OpenAI answer and text-to-speech access
 - Canonical domain `www.rockyaloha.com`
 
-## Required secret names
+## Required Cloudflare values
 
 Store secret values only in Cloudflare and an approved private password manager.
 Never commit the values to GitHub or paste them into support messages.
@@ -65,8 +65,13 @@ Never commit the values to GitHub or paste them into support messages.
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
 
-Public keys and non-secret environment values are preserved in the checked-in
-configuration.
+Required public configuration value:
+
+- `TURNSTILE_SITE_KEY`
+
+Clerk public keys and most non-secret environment values are preserved in the
+checked-in configuration. The Turnstile site key must be retained in Cloudflare
+or retrieved from the Turnstile widget settings during a rebuild.
 
 ## Stripe baseline
 
