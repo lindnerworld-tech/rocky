@@ -1,3 +1,5 @@
+import { voiceEnabledForEnvironment } from "./rocky-voice.js";
+
 export const CANONICAL_HOSTNAME = "www.rockyaloha.com";
 export const APEX_HOSTNAME = "rockyaloha.com";
 
@@ -16,6 +18,8 @@ export function healthState(env) {
     env.TURNSTILE_SITE_KEY && env.TURNSTILE_SECRET_KEY
   );
   const aiEnabled = env.ROCKY_AI_ENABLED !== "false";
+  const voiceEnabled = voiceEnabledForEnvironment(env);
+  const voiceReady = !voiceEnabled || Boolean(env.OPENAI_API_KEY);
   const identityEnabled = env.ROCKY_IDENTITY_ENABLED === "true";
   const identityReady = !identityEnabled || Boolean(
     env.CLERK_PUBLISHABLE_KEY && env.CLERK_JWT_KEY && env.ROCKY_DB
@@ -32,6 +36,7 @@ export function healthState(env) {
     protectedByTurnstile &&
     aiEnabled &&
     env.OPENAI_API_KEY &&
+    voiceReady &&
     identityReady &&
     paymentsReady
   );
@@ -43,6 +48,8 @@ export function healthState(env) {
       service: "project-rocky",
       protected: protectedByTurnstile,
       aiEnabled,
+      voiceEnabled,
+      voiceReady,
       identityEnabled,
       identityReady,
       paymentsEnabled,
