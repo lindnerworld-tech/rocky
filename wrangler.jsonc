@@ -9,7 +9,7 @@
     "ROCKY_DAILY_IP_LIMIT": "1",
     "ROCKY_GLOBAL_DAILY_LIMIT": "500",
     "ROCKY_IDENTITY_ENABLED": "true",
-    "ROCKY_PAYMENTS_ENABLED": "false",
+    "ROCKY_PAYMENTS_ENABLED": "true",
     "ROCKY_SITE_URL": "https://www.rockyaloha.com",
     "STRIPE_MONTHLY_PRICE_ID": "price_1TwEBR9yakPvhQdpkVD7vDlk",
     "STRIPE_ANNUAL_PRICE_ID": "price_1TwDzA9yakPvhQdpamdErN02",
