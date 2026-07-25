@@ -80,13 +80,15 @@ test("homepage uses server-created Stripe Checkout and exposes no secrets", asyn
   assert.doesNotMatch(html, /ROCKY_CHECKOUT_SECRET/);
 });
 
-test("production keeps charging off while retaining the approved Stripe prices", async () => {
+test("production enables charging while staging stays off", async () => {
   const config = await readFile(
     new URL("../wrangler.jsonc", import.meta.url),
     "utf8"
   );
+  const settings = JSON.parse(config.replace(/^\uFEFF/, ""));
 
-  assert.match(config, /"ROCKY_PAYMENTS_ENABLED": "false"/);
+  assert.equal(settings.vars.ROCKY_PAYMENTS_ENABLED, "true");
+  assert.equal(settings.env.staging.vars.ROCKY_PAYMENTS_ENABLED, "false");
   assert.match(config, /price_1TwEBR9yakPvhQdpkVD7vDlk/);
   assert.match(config, /price_1TwDzA9yakPvhQdpamdErN02/);
   assert.match(config, /price_1TwEy7QAn31d66ev8DGXt8Mo/);
