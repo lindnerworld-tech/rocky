@@ -10,11 +10,17 @@
   <meta property="og:title" content="Project Rocky Founding 20 Creator Circle">
   <meta property="og:description" content="Rocky is looking for 20 creators who make the internet feel more human.">
   <meta property="og:url" content="https://www.rockyaloha.com/creators">
-  <meta property="og:image" content="https://www.rockyaloha.com/rocky-hero.png">
+  <meta property="og:image" content="https://www.rockyaloha.com/rocky-v08-now-live-poster.jpg">
+  <meta property="og:image:alt" content="Rocky, the original AI pet rock, announcing that Rocky is live.">
+  <meta property="og:video" content="https://www.rockyaloha.com/rocky-v08-now-live.mp4">
+  <meta property="og:video:type" content="video/mp4">
+  <meta property="og:video:width" content="720">
+  <meta property="og:video:height" content="1280">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Project Rocky Founding 20 Creator Circle">
   <meta name="twitter:description" content="Four billion years of perspective. Twenty first packages. One honest story.">
-  <meta name="twitter:image" content="https://www.rockyaloha.com/rocky-hero.png">
+  <meta name="twitter:image" content="https://www.rockyaloha.com/rocky-v08-now-live-poster.jpg">
+  <meta name="twitter:image:alt" content="Rocky, the original AI pet rock, announcing that Rocky is live.">
   <title>Founding 20 Creator Circle | Project Rocky</title>
   <link rel="canonical" href="https://www.rockyaloha.com/creators">
   <link rel="preload" href="/rocky-hero.png" as="image">
@@ -205,6 +211,64 @@
       font-weight: 850;
     }
     .proof strong { color: var(--coral); }
+
+    .launch-film {
+      padding: 96px 20px;
+      color: var(--white);
+      background:
+        radial-gradient(circle at 78% 24%, rgba(100,208,202,.16), transparent 30%),
+        radial-gradient(circle at 18% 80%, rgba(242,166,90,.14), transparent 32%),
+        #0a222e;
+    }
+    .launch-film-grid {
+      display: grid;
+      grid-template-columns: minmax(0, .82fr) minmax(280px, .58fr);
+      gap: clamp(42px, 7vw, 84px);
+      width: min(1000px, 100%);
+      margin: 0 auto;
+      align-items: center;
+    }
+    .launch-film-copy h2 {
+      max-width: 650px;
+      margin: 0;
+      font-size: clamp(2.6rem, 6vw, 5rem);
+      letter-spacing: -.055em;
+    }
+    .launch-film-copy > p:not(.section-label) {
+      max-width: 610px;
+      margin: 22px 0 0;
+      color: rgba(255,255,255,.76);
+      font-size: 1.08rem;
+    }
+    .launch-film-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 30px;
+    }
+    .launch-film-frame {
+      width: min(390px, 100%);
+      margin: 0 auto;
+      padding: 10px;
+      border: 1px solid rgba(255,255,255,.17);
+      border-radius: 30px;
+      background: rgba(255,255,255,.08);
+      box-shadow: 0 32px 90px rgba(0,0,0,.35);
+    }
+    .launch-film-frame video {
+      display: block;
+      width: 100%;
+      aspect-ratio: 9 / 16;
+      border-radius: 21px;
+      background: #061820;
+      object-fit: cover;
+    }
+    .launch-film-caption {
+      margin: 10px 4px 1px;
+      color: rgba(255,255,255,.66);
+      font-size: .78rem;
+      text-align: center;
+    }
 
     .section {
       width: min(1080px, calc(100% - 40px));
@@ -433,8 +497,11 @@
     .footer-links a { color: rgba(255,255,255,.74); }
 
     @media (max-width: 820px) {
-      .cards, .application-grid { grid-template-columns: 1fr; }
+      .cards, .application-grid, .launch-film-grid { grid-template-columns: 1fr; }
       .application-grid { gap: 34px; }
+      .launch-film-copy { text-align: center; }
+      .launch-film-copy > p:not(.section-label) { margin-inline: auto; }
+      .launch-film-actions { justify-content: center; }
       .hero { min-height: 690px; background-position: 70% center; }
     }
     @media (max-width: 580px) {
@@ -473,7 +540,7 @@
         <p class="hero-lead">Rocky is a four-billion-year-old AI pet rock from Hawaii with ancient perspective, island humor, and no interest in shouting. We are looking for 20 thoughtful creators to help introduce him to the world.</p>
         <div class="hero-actions">
           <a class="button button-primary" href="#apply">Apply for the Founding 20</a>
-          <a class="button button-secondary" href="/#ask-rocky">Meet Rocky first</a>
+          <a class="button button-secondary" href="#meet-rocky">Watch Rocky</a>
         </div>
       </div>
     </div>
@@ -484,6 +551,34 @@
   </div>
 
   <main id="content">
+    <section class="launch-film" id="meet-rocky" aria-labelledby="meet-rocky-title">
+      <div class="launch-film-grid">
+        <div class="launch-film-copy">
+          <p class="section-label" style="color:#86e0dc">Rocky Goes Live v1.2</p>
+          <h2 id="meet-rocky-title">Meet Rocky in 12 seconds.</h2>
+          <p>Rocky is live: ancient perspective, modern AI, island humor, and no judgment. Watch the official launch film, then ask Rocky the question you actually carry.</p>
+          <div class="launch-film-actions">
+            <a class="button button-primary" href="/#ask-rocky">Ask Rocky</a>
+            <a class="button button-secondary" href="#apply">Become a creator</a>
+          </div>
+        </div>
+        <figure class="launch-film-frame">
+          <video
+            controls
+            playsinline
+            preload="metadata"
+            poster="/rocky-v08-now-live-poster.jpg"
+            aria-label="Rocky V08 Now Live launch film"
+          >
+            <source src="/rocky-v08-now-live.mp4" type="video/mp4">
+            Your browser does not support embedded video. You can
+            <a href="/rocky-v08-now-live.mp4">open Rocky's launch film directly</a>.
+          </video>
+          <figcaption class="launch-film-caption">Rocky V08 — Now Live · 12 seconds · Vertical video</figcaption>
+        </figure>
+      </div>
+    </section>
+
     <section class="section" aria-labelledby="why-rocky">
       <p class="section-label">A different kind of collaboration</p>
       <h2 id="why-rocky">A character people can ask, hear, hold, and remember.</h2>
