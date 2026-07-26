@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 
 import {
   creatorShareUrl,
@@ -444,8 +444,18 @@ test("confirmed Stripe referral is recorded only for a known creator code", asyn
 });
 
 test("creator page, homepage, and migration provide the full protected funnel", async () => {
-  const [creatorPage, homepage, privacy, terms, migration, worker, config] =
-    await Promise.all([
+  const [
+    creatorPage,
+    homepage,
+    privacy,
+    terms,
+    migration,
+    worker,
+    config,
+    launchDoc,
+    launchVideo,
+    launchPoster
+  ] = await Promise.all([
       readFile(new URL("../WEBSITE/creators.html", import.meta.url), "utf8"),
       readFile(new URL("../WEBSITE/index.html", import.meta.url), "utf8"),
       readFile(new URL("../WEBSITE/privacy.html", import.meta.url), "utf8"),
@@ -455,10 +465,26 @@ test("creator page, homepage, and migration provide the full protected funnel", 
         "utf8"
       ),
       readFile(new URL("../worker.mjs", import.meta.url), "utf8"),
-      readFile(new URL("../wrangler.jsonc", import.meta.url), "utf8")
+      readFile(new URL("../wrangler.jsonc", import.meta.url), "utf8"),
+      readFile(
+        new URL("../DOCS/ROCKY_GOES_LIVE_V1_2.md", import.meta.url),
+        "utf8"
+      ),
+      stat(new URL("../WEBSITE/rocky-v08-now-live.mp4", import.meta.url)),
+      stat(
+        new URL(
+          "../WEBSITE/rocky-v08-now-live-poster.jpg",
+          import.meta.url
+        )
+      )
     ]);
 
   assert.match(creatorPage, /Founding 20 Creator Circle/);
+  assert.match(creatorPage, /id="meet-rocky"/);
+  assert.match(creatorPage, /rocky-v08-now-live\.mp4/);
+  assert.match(creatorPage, /rocky-v08-now-live-poster\.jpg/);
+  assert.match(creatorPage, /<video[\s\S]*controls[\s\S]*playsinline/);
+  assert.match(creatorPage, /property="og:video"/);
   assert.match(creatorPage, /fetch\("\/creator-apply"/);
   assert.match(creatorPage, /fetch\("\/creator-event"/);
   assert.match(creatorPage, /action: "creator_apply"/);
@@ -466,6 +492,7 @@ test("creator page, homepage, and migration provide the full protected funnel", 
   assert.match(creatorPage, /ftc\.gov\/influencers/);
   assert.match(creatorPage, /property="og:title"/);
   assert.match(homepage, /id="creatorInvite" hidden/);
+  assert.match(homepage, /href="\/creators#meet-rocky"/);
   assert.match(homepage, /referralCode: attribution\.referralCode/);
   assert.match(homepage, /property="og:title"/);
   assert.match(homepage, /application\/ld\+json/);
@@ -483,6 +510,13 @@ test("creator page, homepage, and migration provide the full protected funnel", 
     deployment.env.staging.vars.ROCKY_CREATORS_ENABLED,
     "true"
   );
+  assert.match(launchDoc, /Stripe hosted Checkout/);
+  assert.match(launchDoc, /creators#meet-rocky/);
+  assert.doesNotMatch(launchDoc, /Paddle/i);
+  assert.ok(launchVideo.size > 1_000_000);
+  assert.ok(launchVideo.size < 5_000_000);
+  assert.ok(launchPoster.size > 20_000);
+  assert.ok(launchPoster.size < 300_000);
   assert.doesNotMatch(creatorPage, /TURNSTILE_SECRET_KEY|STRIPE_SECRET_KEY/);
 });
 
