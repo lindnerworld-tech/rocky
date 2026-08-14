@@ -223,7 +223,7 @@ test("homepage provides a disclosed, user-initiated voice control", async () => 
   assert.match(worker, /Allow: "POST"/);
 });
 
-test("approved voice is enabled only in production", async () => {
+test("approved voice configuration keeps checkout safely paused", async () => {
   const source = await readFile(
     new URL("../wrangler.jsonc", import.meta.url),
     "utf8"
@@ -238,6 +238,6 @@ test("approved voice is enabled only in production", async () => {
     publicVoiceConfiguration(config.env.staging.vars).enabled,
     false
   );
-  assert.equal(config.vars.ROCKY_PAYMENTS_ENABLED, "true");
+  assert.equal(config.vars.ROCKY_PAYMENTS_ENABLED, "false");
   assert.equal(config.env.staging.vars.ROCKY_PAYMENTS_ENABLED, "false");
 });
