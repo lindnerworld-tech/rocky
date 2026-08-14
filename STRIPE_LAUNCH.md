@@ -6,13 +6,13 @@ ID and creates the Checkout Session on the server.
 
 ## Live catalog
 
-- Monthly — $7.99 USD: `price_1TwEBR9yakPvhQdpkVD7vDlk`
-- Annual — $59.00 USD: `price_1TwDzA9yakPvhQdpamdErN02`
+- Monthly — $4.99 USD: create a new live Stripe Price before re-enabling checkout
+- Annual — $39.00 USD: create a new live Stripe Price before re-enabling checkout
 
 ## Sandbox catalog
 
-- Monthly — $7.99 USD: `price_1TwEy7QAn31d66ev8DGXt8Mo`
-- Annual — $59.00 USD: `price_1TwF0sQAn31d66evWfDKeRUL`
+- Monthly — $4.99 USD: create a new sandbox Stripe Price before checkout testing
+- Annual — $39.00 USD: create a new sandbox Stripe Price before checkout testing
 
 These identifiers are safe to store in source. Stripe secret keys and webhook
 signing secrets are not.
