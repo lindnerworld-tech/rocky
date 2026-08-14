@@ -72,25 +72,25 @@ test("homepage uses server-created Stripe Checkout and exposes no secrets", asyn
   assert.doesNotMatch(html, /paddle-checkout-context/);
   assert.match(html, /fetch\("\/create-checkout-session"/);
   assert.match(html, /window\.location\.assign\(result\.checkoutUrl\)/);
-  assert.match(html, /Choose annual · \$59\/year/);
-  assert.match(html, /Monthly · \$7\.99/);
+  assert.match(html, /Choose annual · \$39\/year/);
+  assert.match(html, /Monthly · \$4\.99/);
   assert.doesNotMatch(html, /STRIPE_SECRET_KEY/);
   assert.doesNotMatch(html, /STRIPE_WEBHOOK_SECRET/);
   assert.doesNotMatch(html, /PADDLE_WEBHOOK_SECRET/);
   assert.doesNotMatch(html, /ROCKY_CHECKOUT_SECRET/);
 });
 
-test("production enables charging while staging stays off", async () => {
+test("checkout stays disabled while new launch prices are activated", async () => {
   const config = await readFile(
     new URL("../wrangler.jsonc", import.meta.url),
     "utf8"
   );
   const settings = JSON.parse(config.replace(/^\uFEFF/, ""));
 
-  assert.equal(settings.vars.ROCKY_PAYMENTS_ENABLED, "true");
+  assert.equal(settings.vars.ROCKY_PAYMENTS_ENABLED, "false");
   assert.equal(settings.env.staging.vars.ROCKY_PAYMENTS_ENABLED, "false");
-  assert.match(config, /price_1TwEBR9yakPvhQdpkVD7vDlk/);
-  assert.match(config, /price_1TwDzA9yakPvhQdpamdErN02/);
+  assert.match(config, /"STRIPE_MONTHLY_PRICE_ID": ""/);
+  assert.match(config, /"STRIPE_ANNUAL_PRICE_ID": ""/);
   assert.match(config, /price_1TwEy7QAn31d66ev8DGXt8Mo/);
   assert.match(config, /price_1TwF0sQAn31d66evWfDKeRUL/);
   assert.doesNotMatch(config, /STRIPE_SECRET_KEY/);
