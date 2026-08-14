@@ -50,8 +50,8 @@ test("pricing and refund pages disclose the approved plans and refund window", a
   const pricing = await readPage("pricing.html");
   const refunds = await readPage("refund-policy.html");
 
-  assert.match(pricing, /\$7\.99/);
-  assert.match(pricing, /\$59/);
+  assert.match(pricing, /\$4\.99/);
+  assert.match(pricing, /\$39/);
   assert.match(pricing, /20 AI-generated Rocky perspectives per day/);
   assert.match(refunds, /within 14 calendar days/);
   assert.match(refunds, /initial subscription purchase and to a renewal charge/);
